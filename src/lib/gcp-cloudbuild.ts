@@ -1,4 +1,5 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
+import { table } from 'table';
 
 const client = new CloudBuildClient();
 
@@ -23,7 +24,7 @@ const TRIGGER_NAMES = [
 async function getTriggerId(triggerName: string): Promise<string | null> {
     const [triggers] = await client.listBuildTriggers({ projectId: 'your-project-id' });
     const trigger = triggers.find(t => t.name === triggerName);
-    return trigger ? trigger.id : null;
+    return trigger && trigger.id ? trigger.id : null;
 }
 
 async function updateTrigger(triggerId: string, branchPattern: string, tags: string[]): Promise<void> {
@@ -61,4 +62,35 @@ async function triggerList(): Promise<void> {
     });
 }
 
-export { triggerNormalize, triggerList };
+async function printTriggerTable(): Promise<void> {
+    const [triggers] = await client.listBuildTriggers({ projectId: 'development-brainfinance' });
+
+    const data = [
+        ['Status', 'Name', 'Repository', 'Labels', 'Branch/Tag', 'Pattern']
+    ];
+
+    triggers.forEach(trigger => {
+        const status = trigger.disabled ? 'Disabled' : 'Enabled';
+        const name = trigger.name || '---';
+        const repoType = trigger.github ? "GitHub"
+            : (trigger.sourceToBuild && trigger.sourceToBuild.uri && trigger.sourceToBuild.uri.includes('bitbucket')) ? "Bitbucket"
+            : (trigger.triggerTemplate && trigger.triggerTemplate.repoName) ? "CloudSource"
+            : "Unknown";
+        const labels = trigger.tags?.join(', ') || '---';
+        const branchOrTag = (trigger.triggerTemplate) ? (
+            (trigger.triggerTemplate.branchName) ? "Branch-based" :
+            (trigger.triggerTemplate.tagName) ? "Tag-based" : "other"
+        ) : (trigger.github && trigger.github.push) ? (
+            (trigger.github.push.branch) ? "GitHub branch-based" :
+            (trigger.github.push.tag) ? "GitHub tag-based" : "GitHub other"
+        ) : "???";
+        const pattern = trigger.triggerTemplate?.branchName || trigger.triggerTemplate?.tagName || '---';
+
+        data.push([status, name, repoType, labels, branchOrTag, pattern]);
+    });
+
+    const output = table(data);
+    console.log(output);
+}
+
+export { triggerNormalize, triggerList, printTriggerTable };
