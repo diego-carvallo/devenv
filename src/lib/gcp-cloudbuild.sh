@@ -89,6 +89,6 @@ function _trigger_normalize() {
 }
 function _trigger_list() {
 #   echo "[devenv] _trigger_list"
-  gcloud builds triggers list --project=development-brainfinance --sort-by=name --format="table(name,id,tags, triggerTemplate.branchName)"
+    gcloud builds triggers list --project=development-brainfinance --sort-by=name --format="table(name,id,tags, triggerTemplate.branchName)"
 #   echo "[devenv] Done _trigger_list"
 }
