@@ -5,5 +5,5 @@ export const alias = 'n';
 
 
 export default function normalize() {
-  return <Text>Normalizing list <Newline /></Text>;
+    return <Text>Normalizing list <Newline /></Text>;
 }

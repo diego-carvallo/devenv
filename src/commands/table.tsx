@@ -17,6 +17,6 @@ import {Newline, Text} from 'ink';
 // ]
 
 export default function table() {
-  return <Text>table test <Newline /></Text>;
-	// return <Table data={data} />;
+    return <Text>table test <Newline /></Text>;
+    // return <Table data={data} />;
 }

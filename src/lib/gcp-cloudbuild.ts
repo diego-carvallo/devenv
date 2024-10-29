@@ -21,18 +21,18 @@ const TRIGGER_NAMES = [
 ];
 
 async function getTriggerId(triggerName: string): Promise<string | null> {
-  const [triggers] = await client.listBuildTriggers({ projectId: 'your-project-id' });
-  const trigger = triggers.find(t => t.name === triggerName);
-  return trigger ? trigger.id : null;
+    const [triggers] = await client.listBuildTriggers({ projectId: 'your-project-id' });
+    const trigger = triggers.find(t => t.name === triggerName);
+    return trigger ? trigger.id : null;
 }
 
 async function updateTrigger(triggerId: string, branchPattern: string, tags: string[]): Promise<void> {
-  const [trigger] = await client.getBuildTrigger({ projectId: 'your-project-id', triggerId });
-  if (trigger) {
-    trigger.triggerTemplate!.branchName = branchPattern;
-    trigger.tags = Array.from(new Set([...(trigger.tags || []), ...tags]));
-    await client.updateBuildTrigger({ projectId: 'your-project-id', triggerId, trigger });
-  }
+    const [trigger] = await client.getBuildTrigger({ projectId: 'your-project-id', triggerId });
+    if (trigger) {
+        trigger.triggerTemplate!.branchName = branchPattern;
+        trigger.tags = Array.from(new Set([...(trigger.tags || []), ...tags]));
+        await client.updateBuildTrigger({ projectId: 'your-project-id', triggerId, trigger });
+    }
 }
 
 async function triggerNormalize(): Promise<void> {
@@ -40,25 +40,25 @@ async function triggerNormalize(): Promise<void> {
 
   const branchPattern = "develop|^feature|^bugfix";
 
-  for (const triggerName of TRIGGER_NAMES) {
-    const triggerId = await getTriggerId(triggerName);
+    for (const triggerName of TRIGGER_NAMES) {
+        const triggerId = await getTriggerId(triggerName);
 
-    if (triggerId) {
-      console.log(`Updating trigger: ${triggerName} (ID: ${triggerId})`);
-      await updateTrigger(triggerId, branchPattern, ["icash", "backend", "development"]);
-    } else {
-      console.log(`Trigger not found: ${triggerName}`);
+        if (triggerId) {
+            console.log(`Updating trigger: ${triggerName} (ID: ${triggerId})`);
+            await updateTrigger(triggerId, branchPattern, ["icash", "backend", "development"]);
+        } else {
+            console.log(`Trigger not found: ${triggerName}`);
+        }
     }
-  }
 
-  console.log("[devenv] Done normalizing");
+    console.log("[devenv] Done normalizing");
 }
 
 async function triggerList(): Promise<void> {
-  const [triggers] = await client.listBuildTriggers({ projectId: 'your-project-id' });
-  triggers.forEach(trigger => {
-    console.log(`Name: ${trigger.name}, ID: ${trigger.id}, Tags: ${trigger.tags?.join(', ')}, Branch: ${trigger.triggerTemplate?.branchName}`);
-  });
+    const [triggers] = await client.listBuildTriggers({ projectId: 'your-project-id' });
+    triggers.forEach(trigger => {
+        console.log(`Name: ${trigger.name}, ID: ${trigger.id}, Tags: ${trigger.tags?.join(', ')}, Branch: ${trigger.triggerTemplate?.branchName}`);
+    });
 }
 
 export { triggerNormalize, triggerList };
