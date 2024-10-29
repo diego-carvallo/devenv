@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Debug CLI",
+        "program": "${workspaceFolder}/dist/cli.js",
+        "args": ["build", "list"],
+        "console": "integratedTerminal",
+        "preLaunchTask": "tsc: build - tsconfig.json",
+        "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+        "sourceMaps": true
+      }
+    ]
+  }
