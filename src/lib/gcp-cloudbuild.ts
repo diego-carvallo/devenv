@@ -69,22 +69,38 @@ async function triggerNormalize(triggerType: TriggerType): Promise<void> {
 async function triggerList(): Promise<void> {
     const [triggers] = await gcloud.listBuildTriggers({ projectId: PROJECT_ID });
 
-    const data = [
-        ['STATUS', 'NAME', 'REPO TYPE', 'LABELS', 'BRANCH/TAG', 'PATTERN']
-    ];
+    const header = ['REPO', 'REPO TYPE', 'TRIGGER STATUS', 'NAME', 'LABELS', 'BRANCH/TAG', 'PATTERN'].map(text => `\x1b[1;34m${text}\x1b[0m`);
+    const data = [ header ];
 
     triggers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     triggers.forEach(trigger => {
-        if (!SELECTED_TRIGGER_NAMES.includes(trigger.name || ''))
-            return;
+        // if (!SELECTED_TRIGGER_NAMES.includes(trigger.name || ''))
+        //     return;
 
         const status = trigger.disabled ? 'Disabled' : 'Enabled';
-        const name = trigger.name || '---';
+        const triggerName = trigger.name || '---';
         const repoType = trigger.github ? "GitHub"
             : (trigger.sourceToBuild && trigger.sourceToBuild.uri && trigger.sourceToBuild.uri.includes('bitbucket')) ? "Bitbucket"
             : (trigger.triggerTemplate && trigger.triggerTemplate.repoName) ? "CloudSource"
             : "Unknown";
         const labels = trigger.tags?.join(', ') || '---';
+        let host, project: string|undefined;
+        let repository: string[];
+        const repoName = trigger.triggerTemplate && trigger.triggerTemplate.repoName
+            ? (() => {
+                [host, project, ...repository] = trigger.triggerTemplate.repoName.split('_');
+                if (!project) {
+                    [project, ...repository] = trigger.triggerTemplate.repoName.split('/');
+                    host = "";
+                }
+                if (!host) {
+                    host = host;
+                }
+                if (project === "brainfinance")
+                    return `${repository.join('-')}`;
+                return `${project}/${repository.join('-')}`;
+            })()
+            : '---';
         const branchOrTag = (trigger.triggerTemplate) ? (
             (trigger.triggerTemplate.branchName) ? "Branch-based" :
             (trigger.triggerTemplate.tagName) ? "Tag-based" : "other"
@@ -94,7 +110,7 @@ async function triggerList(): Promise<void> {
         ) : "???";
         const pattern = trigger.triggerTemplate?.branchName || trigger.triggerTemplate?.tagName || '---';
 
-        data.push([status, name, repoType, labels, branchOrTag, pattern]);
+        data.push([repoName, repoType +  `(${host})`, triggerName, status, labels, branchOrTag, pattern]);
     });
 
     const output = table(data);
