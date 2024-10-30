@@ -24,27 +24,10 @@ export const FILTERED_TRIGGER_NAMES = [
 //   "sms-service-build-and-deploy"
 ];
 
-
-async function updateTrigger(triggerName: string, triggerId: string, triggerType: TriggerType, tags: string[]): Promise<void> {
-    const [trigger] = await gcloud.getBuildTrigger({ projectId: PROJECT_ID, triggerId });
-    if (trigger) {
-        if (triggerType === TriggerType.Branch) {
-            trigger.triggerTemplate!.branchName = BRANCH_PATTERN;
-            trigger.triggerTemplate!.tagName = undefined;
-            console.log(`[devenv] Updating trigger [${triggerName}] with [${triggerType}] pattern [${BRANCH_PATTERN}]`);
-        } else if (triggerType === TriggerType.Tag) {
-            trigger.triggerTemplate!.branchName = undefined;
-            trigger.triggerTemplate!.tagName = TAG_PATTERN;
-            console.log(`[devenv] Updating trigger [${triggerName}] with [${triggerType}] pattern [${TAG_PATTERN}]`);
-        }
-        trigger.tags = Array.from(new Set([...(trigger.tags || []), ...tags]));
-        await gcloud.updateBuildTrigger({ projectId: PROJECT_ID, triggerId, trigger });
-    }
-}
-
-enum TriggerType {
-    Branch = 'branch',
-    Tag = 'tag'
+export enum PushType {
+    Branch = 'push-to-branch',
+    Tag = 'push-to-tag',
+    Other = 'other'
 }
 
 export type Trigger = {
@@ -56,39 +39,78 @@ export type Trigger = {
     id: string|undefined;
     disabled: boolean;
     labels: string;
-    branchOrTag: string;
+    pushType: PushType;
     pattern: string;
 }
 
-async function triggerNormalize(triggerType: TriggerType): Promise<void> {
-  console.log("[devenv] Normalizing triggers");
-  const [allTriggers] = await gcloud.listBuildTriggers({ projectId: PROJECT_ID });
-  
-    for (const triggerName of FILTERED_TRIGGER_NAMES) {
-        const trigger = allTriggers.find(t => t.name === triggerName);
-        const triggerId = trigger ? trigger.id : null;
-
-        if (triggerId) {
-            await updateTrigger(triggerName, triggerId, triggerType, TRIGGER_LABELS);
-        } else {
-            console.log(`[devenv] Trigger not found: ${triggerName}`);
-        }
-    }
-
-    console.log("[devenv] Done normalizing");
+export type TriggerUpdated = Trigger & {
+    beforePushType: string;
+    beforePattern: string;
+    afterPushType: string;
+    afterPattern: string;
 }
 
-async function triggerArray(): Promise<Trigger[]> {
+export async function updateTriggers(filtered: boolean, newType: PushType): Promise<TriggerUpdated[]> {
+    const triggers = await enumerateTriggers(filtered);
+
+    let triggersUpdated: TriggerUpdated[] = [];
+
+    for (const t of triggers) {
+        if(filtered && !FILTERED_TRIGGER_NAMES.find(n => n === t.name)) {
+            continue;
+        }
+        if (!t.id) {
+            continue;
+        }
+        const [trigger] = await gcloud.getBuildTrigger({ projectId: PROJECT_ID, triggerId: t.id });
+        if (!trigger) {
+            continue;
+        }
+
+        // update trigger
+        let afterPushType: string = "";
+        let afterPattern: string = "";
+        if (newType === PushType.Branch) {
+            afterPushType = PushType.Branch;
+            afterPattern = BRANCH_PATTERN;
+            trigger.triggerTemplate!.branchName = afterPattern;
+            trigger.triggerTemplate!.tagName = undefined;
+        } else if (newType === PushType.Tag) {
+            afterPushType = PushType.Tag;
+            afterPattern = TAG_PATTERN;
+            trigger.triggerTemplate!.branchName = undefined;
+            trigger.triggerTemplate!.tagName = afterPattern;
+        } else {
+            continue;
+        }
+        trigger.tags = Array.from(new Set([...(trigger.tags || []), ...TRIGGER_LABELS]));
+        await gcloud.updateBuildTrigger({ projectId: PROJECT_ID, triggerId: t.id, trigger });
+        triggersUpdated.push({
+            ...t,
+            beforePushType: t.pushType,
+            beforePattern: t.pattern,
+            afterPushType,
+            afterPattern
+        });
+    }
+
+    return triggersUpdated;
+}
+
+export async function enumerateTriggers(filtered: boolean = false): Promise<Trigger[]> {
     const [triggers] = await gcloud.listBuildTriggers({ projectId: PROJECT_ID });
 
     let triggerArray: Trigger[] = [];
 
     triggers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     triggers.forEach(trigger => {
+        if (filtered && !FILTERED_TRIGGER_NAMES.find(n => n === trigger.name)) {
+            return;
+        }
         const name = trigger.name || '---';
         const repoType = trigger.github ? "GitHub"
             : (trigger.sourceToBuild && trigger.sourceToBuild.uri && trigger.sourceToBuild.uri.includes('bitbucket')) ? "Bitbucket"
-            : (trigger.triggerTemplate && trigger.triggerTemplate.repoName) ? "Mirrored"
+            : (trigger.triggerTemplate && trigger.triggerTemplate.repoName) ? "mirrored"
             : "Unknown";
         const labels = trigger.tags?.join(', ') || '---';
         let repoHost, repoProject: string|undefined;
@@ -109,13 +131,13 @@ async function triggerArray(): Promise<Trigger[]> {
                 return `${repoProject}/${repository.join('-')}`;
             })()
             : '---';
-        const branchOrTag = (trigger.triggerTemplate) ? (
-            (trigger.triggerTemplate.branchName) ? "branch-based" :
-            (trigger.triggerTemplate.tagName) ? "tag-based" : "other"
+        const pushType = (trigger.triggerTemplate) ? (
+            (trigger.triggerTemplate.branchName) ? PushType.Branch :
+            (trigger.triggerTemplate.tagName) ? PushType.Tag : PushType.Other
         ) : (trigger.github && trigger.github.push) ? (
-            (trigger.github.push.branch) ? "GitHub branch-based" :
-            (trigger.github.push.tag) ? "GitHub tag-based" : "GitHub other"
-        ) : "???";
+            (trigger.github.push.branch) ? PushType.Branch :
+            (trigger.github.push.tag) ? PushType.Tag : PushType.Other
+        ) : PushType.Other;
         const pattern = trigger.triggerTemplate?.branchName || trigger.triggerTemplate?.tagName || '---';
 
         triggerArray.push({
@@ -127,7 +149,7 @@ async function triggerArray(): Promise<Trigger[]> {
             id: trigger.id || '---',
             disabled: trigger.disabled || false,
             labels,
-            branchOrTag,
+            pushType,
             pattern
         });
     });
@@ -135,4 +157,3 @@ async function triggerArray(): Promise<Trigger[]> {
     return triggerArray;
 }
 
-export { triggerNormalize, triggerArray, TriggerType };
