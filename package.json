@@ -8,7 +8,9 @@
         "node": ">=16"
     },
     "scripts": {
-        "build": "tsc && chmod +x dist/cli.js && npm link",
+        "prebuild": "rm -rf dist",
+        "build": "tsc",
+        "postbuild": "chmod +x dist/cli.js && npm link",
         "dev": "tsc --watch",
         "test": "prettier --check . && xo && ava"
     },

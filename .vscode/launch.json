@@ -6,7 +6,7 @@
         "request": "launch",
         "name": "Debug CLI",
         "program": "${workspaceFolder}/dist/cli.js",
-        "args": ["build", "list"],
+        "args": ["trigger", "list"],
         "console": "integratedTerminal",
         "preLaunchTask": "tsc: build - tsconfig.json",
         "outFiles": ["${workspaceFolder}/dist/**/*.js"],
