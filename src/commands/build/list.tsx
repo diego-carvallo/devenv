@@ -1,8 +1,8 @@
 import React from 'react';
 import {Text} from 'ink';
-import { printTriggerTable } from '../../lib/gcp-cloudbuild.js';
+import { triggerList } from '../../lib/gcp-cloudbuild.js';
 
 export default function list() {
-    printTriggerTable();
+    triggerList();
     return <Text>List build triggers</Text>;
 }
