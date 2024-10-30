@@ -1,10 +1,12 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
 import { table } from 'table';
 
-const client = new CloudBuildClient();
+const gcloud = new CloudBuildClient();
 
 const PROJECT_ID = 'development-brainfinance';
+const TRIGGER_LABELS = ["icash", "backend", "development"];
 const BRANCH_PATTERN = "develop|^feature|^bugfix";
+const TAG_PATTERN = "dev-*";
 const SELECTED_TRIGGER_NAMES = [
   "alicia-build-and-deploy-DEPRECATED",
 //   "backoffice-frontend-build",
@@ -23,32 +25,41 @@ const SELECTED_TRIGGER_NAMES = [
 //   "sms-service-build-and-deploy"
 ];
 
-async function getTriggerId(triggerName: string): Promise<string | null> {
-    const [triggers] = await client.listBuildTriggers({ projectId: PROJECT_ID });
-    const trigger = triggers.find(t => t.name === triggerName);
-    return trigger && trigger.id ? trigger.id : null;
-}
 
-async function updateTrigger(triggerId: string, branchPattern: string, tags: string[]): Promise<void> {
-    const [trigger] = await client.getBuildTrigger({ projectId: PROJECT_ID, triggerId });
+async function updateTrigger(triggerName: string, triggerId: string, triggerType: TriggerType, tags: string[]): Promise<void> {
+    const [trigger] = await gcloud.getBuildTrigger({ projectId: PROJECT_ID, triggerId });
     if (trigger) {
-        trigger.triggerTemplate!.branchName = branchPattern;
+        if (triggerType === TriggerType.Branch) {
+            trigger.triggerTemplate!.branchName = BRANCH_PATTERN;
+            trigger.triggerTemplate!.tagName = undefined;
+            console.log(`[devenv] Updating trigger [${triggerName}] with [${triggerType}] pattern [${BRANCH_PATTERN}]`);
+        } else if (triggerType === TriggerType.Tag) {
+            trigger.triggerTemplate!.branchName = undefined;
+            trigger.triggerTemplate!.tagName = TAG_PATTERN;
+            console.log(`[devenv] Updating trigger [${triggerName}] with [${triggerType}] pattern [${TAG_PATTERN}]`);
+        }
         trigger.tags = Array.from(new Set([...(trigger.tags || []), ...tags]));
-        await client.updateBuildTrigger({ projectId: PROJECT_ID, triggerId, trigger });
+        await gcloud.updateBuildTrigger({ projectId: PROJECT_ID, triggerId, trigger });
     }
 }
 
-async function triggerNormalize(): Promise<void> {
-  console.log("[devenv] Normalizing triggers");
+enum TriggerType {
+    Branch = 'branch',
+    Tag = 'tag'
+}
 
+async function triggerNormalize(triggerType: TriggerType): Promise<void> {
+  console.log("[devenv] Normalizing triggers");
+  const [allTriggers] = await gcloud.listBuildTriggers({ projectId: PROJECT_ID });
+  
     for (const triggerName of SELECTED_TRIGGER_NAMES) {
-        const triggerId = await getTriggerId(triggerName);
+        const trigger = allTriggers.find(t => t.name === triggerName);
+        const triggerId = trigger ? trigger.id : null;
 
         if (triggerId) {
-            console.log(`Updating trigger [${triggerName}] with pattern: ${BRANCH_PATTERN}`);
-            await updateTrigger(triggerId, BRANCH_PATTERN, ["icash", "backend", "development"]);
+            await updateTrigger(triggerName, triggerId, triggerType, TRIGGER_LABELS);
         } else {
-            console.log(`Trigger not found: ${triggerName}`);
+            console.log(`[devenv] Trigger not found: ${triggerName}`);
         }
     }
 
@@ -56,7 +67,7 @@ async function triggerNormalize(): Promise<void> {
 }
 
 async function triggerList(): Promise<void> {
-    const [triggers] = await client.listBuildTriggers({ projectId: PROJECT_ID });
+    const [triggers] = await gcloud.listBuildTriggers({ projectId: PROJECT_ID });
 
     const data = [
         ['STATUS', 'NAME', 'REPO TYPE', 'LABELS', 'BRANCH/TAG', 'PATTERN']
@@ -90,4 +101,4 @@ async function triggerList(): Promise<void> {
     console.log(output);
 }
 
-export { triggerNormalize, triggerList };
+export { triggerNormalize, triggerList, TriggerType };
