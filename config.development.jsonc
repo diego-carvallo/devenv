@@ -1,0 +1,28 @@
+{
+    "PROJECT_ID": "development-brainfinance",
+
+    "TRIGGER_LABELS": ["icash", "backend", "development"],
+    
+    "PUSH_TO_BRANCH_PATTERN": "develop|^feature|^bugfix",
+    
+    "PUSH_TO_TAG_PATTERN": "/dev-*/i",
+    
+    "FILTERED_TRIGGERS": [
+        "alicia-build-and-deploy-DEPRECATED",
+        //   "backoffice-frontend-build",
+        //   "backoffice-pubsub-ws-bridge",
+        //   "clamav-malware-scanner",
+        //   "contentful-cache-build-and-deploy",
+        //   "furious-application-api",
+        //   "furious-backoffice-api",
+        //   "furious-communication-api",
+        //   "furious-dms-api",
+        //   "gcp-storage-bridge-build-and-deploy",
+        //   "maria-build-and-deploy",
+        //   "pubsub-api-bridge-build-and-deploy",
+        //   "rudderstack-service-build-and-deploy",
+        //   "seon-service-build-and-deploy",
+        //   "sms-service-build-and-deploy"
+    ]
+
+}

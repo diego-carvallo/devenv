@@ -1,28 +1,7 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
+import { config } from './config.js';
 
 const gcloud = new CloudBuildClient();
-
-const PROJECT_ID = 'development-brainfinance';
-const TRIGGER_LABELS = ["icash", "backend", "development"];
-const BRANCH_PATTERN = "develop|^feature|^bugfix";
-const TAG_PATTERN = "dev-*";
-export const FILTERED_TRIGGER_NAMES = [
-  "alicia-build-and-deploy-DEPRECATED",
-//   "backoffice-frontend-build",
-//   "backoffice-pubsub-ws-bridge",
-//   "clamav-malware-scanner",
-//   "contentful-cache-build-and-deploy",
-//   "furious-application-api",
-//   "furious-backoffice-api",
-//   "furious-communication-api",
-//   "furious-dms-api",
-//   "gcp-storage-bridge-build-and-deploy",
-//   "maria-build-and-deploy",
-//   "pubsub-api-bridge-build-and-deploy",
-//   "rudderstack-service-build-and-deploy",
-//   "seon-service-build-and-deploy",
-//   "sms-service-build-and-deploy"
-];
 
 export enum PushType {
     Branch = 'push-to-branch',
@@ -56,13 +35,13 @@ export async function updateTriggers(filtered: boolean, newType: PushType): Prom
     let triggersUpdated: TriggerUpdated[] = [];
 
     for (const t of triggers) {
-        if(filtered && !FILTERED_TRIGGER_NAMES.find(n => n === t.name)) {
+        if(filtered && !config.FILTERED_TRIGGERS.find((n:string) => n === t.name)) {
             continue;
         }
         if (!t.id) {
             continue;
         }
-        const [trigger] = await gcloud.getBuildTrigger({ projectId: PROJECT_ID, triggerId: t.id });
+        const [trigger] = await gcloud.getBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id });
         if (!trigger) {
             continue;
         }
@@ -72,19 +51,19 @@ export async function updateTriggers(filtered: boolean, newType: PushType): Prom
         let afterPattern: string = "";
         if (newType === PushType.Branch) {
             afterPushType = PushType.Branch;
-            afterPattern = BRANCH_PATTERN;
+            afterPattern = config.PUSH_TO_BRANCH_PATTERN;
             trigger.triggerTemplate!.branchName = afterPattern;
             trigger.triggerTemplate!.tagName = undefined;
         } else if (newType === PushType.Tag) {
             afterPushType = PushType.Tag;
-            afterPattern = TAG_PATTERN;
+            afterPattern = config.PUSH_TO_TAG_PATTERN;
             trigger.triggerTemplate!.branchName = undefined;
             trigger.triggerTemplate!.tagName = afterPattern;
         } else {
             continue;
         }
-        trigger.tags = Array.from(new Set([...(trigger.tags || []), ...TRIGGER_LABELS]));
-        await gcloud.updateBuildTrigger({ projectId: PROJECT_ID, triggerId: t.id, trigger });
+        trigger.tags = Array.from(new Set([...(trigger.tags || []), ...config.TRIGGER_LABELS]));
+        await gcloud.updateBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id, trigger });
         triggersUpdated.push({
             ...t,
             beforePushType: t.pushType,
@@ -98,21 +77,21 @@ export async function updateTriggers(filtered: boolean, newType: PushType): Prom
 }
 
 export async function enumerateTriggers(filtered: boolean = false): Promise<Trigger[]> {
-    const [triggers] = await gcloud.listBuildTriggers({ projectId: PROJECT_ID });
+    const [triggers] = await gcloud.listBuildTriggers({ projectId: config.PROJECT_ID });
 
     let triggerArray: Trigger[] = [];
 
-    triggers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    triggers.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
     triggers.forEach(trigger => {
-        if (filtered && !FILTERED_TRIGGER_NAMES.find(n => n === trigger.name)) {
+        if (filtered && !config.FILTERED_TRIGGERS.find((n:string) => n === trigger.name)) {
             return;
         }
-        const name = trigger.name || '---';
+        const name = trigger.name ?? '---';
         const repoType = trigger.github ? "GitHub"
-            : (trigger.sourceToBuild && trigger.sourceToBuild.uri && trigger.sourceToBuild.uri.includes('bitbucket')) ? "Bitbucket"
-            : (trigger.triggerTemplate && trigger.triggerTemplate.repoName) ? "mirrored"
-            : "Unknown";
-        const labels = trigger.tags?.join(', ') || '---';
+            : (trigger.sourceToBuild?.uri?.includes('bitbucket')) ? "Bitbucket"
+            : (trigger.triggerTemplate?.repoName) ? "mirrored"
+            : "unknown";
+        const labels = trigger.tags?.join(', ') ?? '---';
         let repoHost, repoProject: string|undefined;
         let repository: string[];
 
@@ -134,11 +113,11 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
         const pushType = (trigger.triggerTemplate) ? (
             (trigger.triggerTemplate.branchName) ? PushType.Branch :
             (trigger.triggerTemplate.tagName) ? PushType.Tag : PushType.Other
-        ) : (trigger.github && trigger.github.push) ? (
+        ) : (trigger.github?.push) ? (
             (trigger.github.push.branch) ? PushType.Branch :
             (trigger.github.push.tag) ? PushType.Tag : PushType.Other
         ) : PushType.Other;
-        const pattern = trigger.triggerTemplate?.branchName || trigger.triggerTemplate?.tagName || '---';
+        const pattern = trigger.triggerTemplate?.branchName ?? trigger.triggerTemplate?.tagName ?? '---';
 
         triggerArray.push({
             repoName,
@@ -146,7 +125,7 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
             repoHost,
             repoProject,
             name,
-            id: trigger.id || '---',
+            id: trigger.id ?? '---',
             disabled: trigger.disabled || false,
             labels,
             pushType,
