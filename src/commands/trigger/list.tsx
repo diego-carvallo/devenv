@@ -1,10 +1,17 @@
 import React from 'react';
 import { table } from 'table';
-import {Newline, Text} from 'ink';
+import { Newline, Text } from 'ink';
+import readline from 'readline';
 import chalk from 'chalk';
+import zod from 'zod';
 import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
 export const alias = 'l';
+
+export const options = zod.object({
+	w: zod.boolean().describe('Watch for changes'),
+});
+type Props = { options: zod.infer<typeof options>; };
 
 async function getTriggerList(filtered: boolean = false): Promise<string[][]> {
     const triggers = await cloudbuild.enumerateTriggers(filtered);
@@ -24,11 +31,22 @@ async function getTriggerList(filtered: boolean = false): Promise<string[][]> {
     return data;
 }
 
-export default function list() {
+export default function devenv_trigger_list({options}: Props) {
     const filtered = false;
-    getTriggerList(filtered).then((list) => {
+
+    const renderTable = async () => {
+        const list = await getTriggerList(filtered);
+        if (options.w) {
+            readline.cursorTo(process.stdout, 0, 0);
+            readline.clearScreenDown(process.stdout);
+        }
         console.log(table(list));
-    });
+    };
+
+    renderTable();
+    if (options.w) {
+        setInterval(renderTable, 5000);
+    }
 
     return <Text>Listed tirggers<Newline /></Text>;
 }

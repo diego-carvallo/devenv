@@ -7,15 +7,11 @@ import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
 export const alias = 'n';
 
-
 export const options = zod.object({
 	tag: zod.boolean().describe('Convert push-to-tag'),
 	branch: zod.boolean().describe('Convert to push-to-branch'),
 });
-
-type Props = {
-	options: zod.infer<typeof options>;
-};
+type Props = { options: zod.infer<typeof options>; };
 
 async function getUpdatedTriggerList(filtered: boolean = false, newPushType: cloudbuild.PushType): Promise<string[][]> {
     const triggers = await cloudbuild.updateTriggers(filtered, newPushType);
@@ -33,7 +29,7 @@ async function getUpdatedTriggerList(filtered: boolean = false, newPushType: clo
     return data;
 }
 
-export default function normalize({options}: Props) {
+export default function devenv_trigger_normalize({options}: Props) {
     if (options.tag && options.branch) {
         return <Text>You can specify only one of --tag or --branch <Newline /></Text>;
     }
