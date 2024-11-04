@@ -1,7 +1,7 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
 import { config } from './config.js';
 
-const gcloud = new CloudBuildClient();
+const gcloudbuild = new CloudBuildClient();
 
 export enum PushType {
     Branch = 'push-to-branch',
@@ -41,7 +41,7 @@ export async function updateTriggers(filtered: boolean, newType: PushType): Prom
         if (!t.id) {
             continue;
         }
-        const [trigger] = await gcloud.getBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id });
+        const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id });
         if (!trigger) {
             continue;
         }
@@ -63,7 +63,7 @@ export async function updateTriggers(filtered: boolean, newType: PushType): Prom
             continue;
         }
         trigger.tags = Array.from(new Set([...(trigger.tags || []), ...config.TRIGGER_LABELS]));
-        await gcloud.updateBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id, trigger });
+        await gcloudbuild.updateBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id, trigger });
         triggersUpdated.push({
             ...t,
             beforePushType: t.pushType,
@@ -77,13 +77,13 @@ export async function updateTriggers(filtered: boolean, newType: PushType): Prom
 }
 
 export async function enumerateTriggers(filtered: boolean = false): Promise<Trigger[]> {
-    const [triggers] = await gcloud.listBuildTriggers({ projectId: config.PROJECT_ID });
+    const [triggers] = await gcloudbuild.listBuildTriggers({ projectId: config.PROJECT_ID });
 
     let triggerArray: Trigger[] = [];
 
     triggers.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
     triggers.forEach(trigger => {
-        if (filtered && !config.FILTERED_TRIGGERS.find((n:string) => n === trigger.name)) {
+        if (filtered && config.FILTERED_SERVICES.length > 0 && !config.FILTERED_TRIGGERS.find((n:string) => n === trigger.name)) {
             return;
         }
         const name = trigger.name ?? '---';
