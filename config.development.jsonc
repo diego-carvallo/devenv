@@ -44,6 +44,84 @@
         //   "rudderstack-service-build-and-deploy",
         //   "seon-service-build-and-deploy",
         //   "sms-service-build-and-deploy"
-    ]
+    ],
+    
+    "BACKEND_SERVICES": [
+        "alicia",
+        "maria",
+        "furious-application-api",
+        "paydayloan",
+        "paydayloan-workers",
+        "payment-gateway",
+        "ptp-service",
+    ],
+    
+    "BACKOFFICE_SERVICES": [
+        "backoffice-frontend",
+        "backoffice-pubsub-ws-bridge",
+        "furious-backoffice-api",
+        "laravel-bo-api",
+        "admin-login-service",
+        "test-user-finder",
+        "main-account-finder-api",
+    ],
+    
+    "BRIDGE_SERVICES": [
+        "aws-connect-bridge",
+        "contentful-cache",
+        "clamav-malware-scanner",
+        "credit-health-service",
+        "document-template-service",
+        "finance-api",
+        "furious-communication-api",
+        "furious-dms-api",
+        "furious-thirdparty-api",
+        "gcp-storage-bridge",
+        "pubsub-api-bridge",
+        "rudderstack-service",
+        "seon-service",
+        "sms-service",
+    ],
+    
+    "MONITORING_SERVICES": [
+        "financial-metrics",
+        "collection-discount-api",
+        "communications-monitoring",
+        "customer-lifetime-value",
+        "customer-segmentation-api",
+        "customer-service-automation",
+        "icash-active-monitoring",
+        "marketing-service",
+        "service-monitoring",
+    ],
+    
+    "DATASCIENCE_SERVICES": [
+        "ai-bridge",
+        "automated-qa",
+        "bank-account-parser",
+        "bankruptcy-detection",
+        "brainplan",
+        "client-association-graphql",
+        "expired-contracts",
+        "geolocation",
+        "legal-amount",
+        "payroll-algorithm-api",
+        "repayment-quality",
+        "survival-analysis",
+        "transaction-categorizer-api",
+        "kyc",
+    ],
+
+
+    "DATE_FORMAT": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit",
+        "hour": "2-digit",
+        "minute": "2-digit",
+        "second": "2-digit",
+        "hour12": false,
+        "timeZone": "America/Toronto"
+    }
 
 }
