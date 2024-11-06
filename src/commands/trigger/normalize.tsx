@@ -19,7 +19,7 @@ async function getUpdatedTriggerList(filtered: boolean = false, newPushType: clo
     const data = [ header ];
     triggers.forEach(t => {
         data.push([
-            t.repoName,
+            t.serviceName,
             t.name.replace("DEPRECATED", chalk.yellow("DEPRECATED")),
             t.labels,
             `${chalk.bgRed(t.beforePushType)} -> ${chalk.bgGreen(t.afterPushType)}`,

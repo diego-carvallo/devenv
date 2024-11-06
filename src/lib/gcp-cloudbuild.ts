@@ -10,7 +10,8 @@ export enum PushType {
 }
 
 export type Trigger = {
-    repoName: string;
+    serviceName: string;
+    serviceCategory: string;
     repoType: string;
     repoHost: string|undefined;
     repoProject: string|undefined;
@@ -110,6 +111,14 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
                 return `${repoProject}/${repository.join('-')}`;
             })()
             : '---';
+            
+        const serviceCategory = config.BACKEND_SERVICES.includes(repoName) ? 'BACKEND SERVICES' :
+            config.BACKOFFICE_SERVICES.includes(repoName) ? 'BACKOFFICE SERVICES' :
+            config.BRIDGE_SERVICES.includes(repoName) ? 'BRIDGE SERVICES' :
+            config.MONITORING_SERVICES.includes(repoName) ? 'MONITORING SERVICES' :
+            config.DATASCIENCE_SERVICES.includes(repoName) ? 'DATASCIENCE SERVICES' :
+            'OTHER';
+
         const pushType = (trigger.triggerTemplate) ? (
             (trigger.triggerTemplate.branchName) ? PushType.Branch :
             (trigger.triggerTemplate.tagName) ? PushType.Tag : PushType.Other
@@ -120,7 +129,8 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
         const pattern = trigger.triggerTemplate?.branchName ?? trigger.triggerTemplate?.tagName ?? '---';
 
         triggerArray.push({
-            repoName,
+            serviceName: repoName,
+            serviceCategory,
             repoType,
             repoHost,
             repoProject,

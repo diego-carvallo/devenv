@@ -15,11 +15,20 @@ type Props = { options: zod.infer<typeof options>; };
 
 async function getTriggerList(filtered: boolean = false): Promise<string[][]> {
     const triggers = await cloudbuild.enumerateTriggers(filtered);
-    const header = ['REPO', 'REPO HOST', 'TRIGGER NAME', 'ENABLED', 'LABELS', 'PUSH TYPE', 'PATTERN'].map(text => chalk.cyan(text));
+    const header = ['SERVICE CATEGORY', 'SERVICE NAME', 'REPO HOST', 'TRIGGER NAME', 'ENABLED', 'LABELS', 'PUSH TYPE', 'PATTERN'].map(text => chalk.cyan(text));
     const data = [ header ];
+
+    triggers?.sort((a, b) => {
+        if (a.serviceCategory === b.serviceCategory) {
+            return a.serviceName.localeCompare(b.serviceName);
+        }
+        return a.serviceCategory.localeCompare(b.serviceCategory);
+    });
+
     triggers.forEach(t => {
         data.push([
-            t.repoName,
+            t.serviceCategory,
+            t.serviceName,
             t.repoType + (t.repoHost?` ${t.repoHost}`:``),
             t.name.replace("DEPRECATED", chalk.yellow("DEPRECATED")),
             t.disabled ? chalk.red('Disabled') : chalk.green('   ✔'),

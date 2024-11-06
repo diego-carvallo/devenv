@@ -32,7 +32,6 @@ async function getServiceList(filtered: boolean = false): Promise<string[][]> {
         return a.serviceCategory.localeCompare(b.serviceCategory);
     });
 
-
     let currentCategory = '';
     let startIndex = 0;
     let categorySize = 0;
