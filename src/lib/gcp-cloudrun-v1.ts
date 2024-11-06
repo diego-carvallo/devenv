@@ -10,7 +10,7 @@ export type Service = {
     commitSha: string;
     lastDeployed: string;
     lastRevision: string;
-    onlineRevisions?: string[];
+    onlineRevisions?: string[][];
 }
 
 export async function enumerateServices(filtered: boolean = false) {
@@ -44,11 +44,14 @@ export async function enumerateServices(filtered: boolean = false) {
         const lastDeployed = lastDeployTimestamp ? new Intl.DateTimeFormat('en-CA', config.DATE_FORMAT).format(new Date(lastDeployTimestamp)).replace(',', '') : '---';
         const [branchName, _, commitSha] = service.metadata?.labels?.['deploy_stamp']?.split('-') || '';
 
+        let otherOnlineRevisions = false;
         const onlineRevisions = service.status?.traffic?.map(revision => {
             const revisionId = revision.revisionName ? revision.revisionName.substring(serviceName.length + 1, revision.revisionName.length) : '---';
-            if (revisionId === lastRevision)
-                return '';
-            return `${revisionId} (${revision.percent ?? 0}%)`
+            if (revisionId === lastRevision) {
+                return [];
+            }
+            otherOnlineRevisions = true;
+            return [revisionId, (`${revision.percent ?? 0}%`)]
         });
 
         serviceArray.push({
@@ -60,9 +63,16 @@ export async function enumerateServices(filtered: boolean = false) {
             commitSha: commitSha ?? '',
             lastDeployed: lastDeployed,
             lastRevision,
-            onlineRevisions,
+            onlineRevisions: otherOnlineRevisions ? onlineRevisions : [],
         });
     }
+
+    serviceArray.sort((a, b) => {
+        if (a.serviceCategory === b.serviceCategory) {
+            return a.serviceName.localeCompare(b.serviceName);
+        }
+        return a.serviceCategory.localeCompare(b.serviceCategory);
+    });
 
     return serviceArray;
 }

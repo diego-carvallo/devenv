@@ -25,13 +25,6 @@ async function getServiceList(filtered: boolean = false): Promise<string[][]> {
          'BRANCH_NAME', 'COMMIT', 'LAST_DEPLOYED', 'LAST_REVISION', 'BACKUP_REVISION'].map(text => chalk.cyan(text));
     const data = [ header ];
 
-    services?.sort((a, b) => {
-        if (a.serviceCategory === b.serviceCategory) {
-            return a.serviceName.localeCompare(b.serviceName);
-        }
-        return a.serviceCategory.localeCompare(b.serviceCategory);
-    });
-
     let currentCategory = '';
     let startIndex = 0;
     let categorySize = 0;

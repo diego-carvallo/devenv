@@ -2,6 +2,16 @@
     "PROJECT_ID": "development-brainfinance",
     "REGION": "northamerica-northeast1",
 
+    "DATE_FORMAT": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit",
+        "hour": "2-digit",
+        "minute": "2-digit",
+        "second": "2-digit",
+        "hour12": false,
+        "timeZone": "America/Toronto"
+    },
 
     "TRIGGER_LABELS": ["icash", "backend", "development"],
     
@@ -112,16 +122,24 @@
         "kyc",
     ],
 
-
-    "DATE_FORMAT": {
-        "year": "numeric",
-        "month": "2-digit",
-        "day": "2-digit",
-        "hour": "2-digit",
-        "minute": "2-digit",
-        "second": "2-digit",
-        "hour12": false,
-        "timeZone": "America/Toronto"
+    "ALIASES": {
+        "backoffice-api":           "furious-backoffice-api",
+        "clamav-scanner":           "clamav-malware-scanner",
+        "client-association":       "client-association-graphql",
+        "collection-discount":      "collection-discount-api",
+        "communication-api":        "furious-communication-api",
+        // "communications-api":       "cloudflare-test",
+        "customer-segmentation":    "customer-segmentation-api",
+        "documentmanagementsystem": "furious-dms-api",
+        "finance-dashboard-etl":    "financial-metrics",
+        "frontend":                 "backoffice-frontend",
+        "main-account-finder":      "main-account-finder-api",
+        "marketing-user-service":   "marketing-service",
+        "payroll-algo-v3":          "payroll-algorithm-api",
+        "pubsub-ws-bridge":         "backoffice-pubsub-ws-bridge",
+        "stephania":                "furious-application-api",
+        "thirdparty-api":           "furious-thirdparty-api",
+        "transaction-categorizer":  "transaction-categorizer-api",
     }
 
 }
