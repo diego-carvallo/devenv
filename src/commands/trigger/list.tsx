@@ -6,13 +6,6 @@ import chalk from 'chalk';
 import zod from 'zod';
 import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
-export const alias = 'l';
-
-export const options = zod.object({
-	w: zod.boolean().describe('Watch for changes'),
-});
-type Props = { options: zod.infer<typeof options>; };
-
 async function getTriggerList(filtered: boolean = false): Promise<string[][]> {
     const triggers = await cloudbuild.enumerateTriggers(filtered);
     const header = ['SERVICE CATEGORY', 'SERVICE NAME', 'REPO HOST', 'TRIGGER NAME', 'ENABLED', 'LABELS', 'PUSH TYPE', 'PATTERN'].map(text => chalk.cyan(text));
@@ -40,6 +33,14 @@ async function getTriggerList(filtered: boolean = false): Promise<string[][]> {
     return data;
 }
 
+// CLI params definition
+export const alias = 'l';
+export const options = zod.object({
+                                    w: zod.boolean().describe('Watch for changes'),
+                                 });
+type Props = { options: zod.infer<typeof options>; };
+
+// CLI default function
 export default function devenv_trigger_list({options}: Props) {
     const filtered = false;
 

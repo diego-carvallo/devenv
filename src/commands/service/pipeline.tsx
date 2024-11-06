@@ -4,7 +4,7 @@ import { Newline, Text } from 'ink';
 import readline from 'readline';
 import chalk from 'chalk';
 import zod from 'zod';
-import * as cloudrun from '../../lib/gcp-cloudrun-v1.js';
+import * as cloudrun from '../../lib/gcp-cloudpipeline.js';
 
 const tableConfig: TableUserConfig = {
     columns: [
@@ -13,7 +13,7 @@ const tableConfig: TableUserConfig = {
     spanningCells: [ ],
 };
 
-async function getServiceList(filtered: boolean = false): Promise<string[][]> {
+async function getServiceData(filtered: boolean = false): Promise<string[][]> {
     const services = await cloudrun.enumerateServices(filtered);
     const header = ['CATEGORY', 'NAME', //'URL', 
          'BRANCH_NAME', 'COMMIT', 'LAST_DEPLOYED', 'LAST_REVISION', 'BACKUP_REVISION'].map(text => chalk.cyan(text));
@@ -64,11 +64,11 @@ export const options = zod.object({
 type Props = { options: zod.infer<typeof options>; };
 
 // CLI default function
-export default function devenv_service_list({options}: Props) {
+export default function devenv_service_pipeline({options}: Props) {
     const filtered = false;
 
     const renderTable = async () => {
-        const list = await getServiceList(filtered);
+        const list = await getServiceData(filtered);
         if (options.w) {
             readline.cursorTo(process.stdout, 0, 0);
             readline.clearScreenDown(process.stdout);

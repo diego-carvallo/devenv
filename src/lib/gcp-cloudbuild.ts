@@ -1,5 +1,6 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
 import { config } from './config.js';
+import * as common from './common.js';
 
 const gcloudbuild = new CloudBuildClient();
 
@@ -93,31 +94,8 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
             : (trigger.triggerTemplate?.repoName) ? "mirrored"
             : "unknown";
         const labels = trigger.tags?.join(', ') ?? '---';
-        let repoHost, repoProject: string|undefined;
-        let repository: string[];
-
-        const repoName = trigger.triggerTemplate && trigger.triggerTemplate.repoName
-            ? (() => {
-                [repoHost, repoProject, ...repository] = trigger.triggerTemplate.repoName.split('_');
-                if (!repoProject) {
-                    [repoProject, ...repository] = trigger.triggerTemplate.repoName.split('/');
-                    repoHost = "";
-                }
-                if(repoHost) {
-                    repoHost = repoHost.replace(/^./, (char) => char.toUpperCase());
-                }
-                if (repoProject === "brainfinance")
-                    return `${repository.join('-')}`;
-                return `${repoProject}/${repository.join('-')}`;
-            })()
-            : '---';
-            
-        const serviceCategory = config.BACKEND_SERVICES.includes(repoName) ? 'BACKEND SERVICES' :
-            config.BACKOFFICE_SERVICES.includes(repoName) ? 'BACKOFFICE SERVICES' :
-            config.BRIDGE_SERVICES.includes(repoName) ? 'BRIDGE SERVICES' :
-            config.MONITORING_SERVICES.includes(repoName) ? 'MONITORING SERVICES' :
-            config.DATASCIENCE_SERVICES.includes(repoName) ? 'DATASCIENCE SERVICES' :
-            'OTHER';
+        const [repoHost, repoProject, repoName] = common.splitRepoName(trigger.triggerTemplate?.repoName);
+        const serviceCategory = common.getServiceCategory(repoName);
 
         const pushType = (trigger.triggerTemplate) ? (
             (trigger.triggerTemplate.branchName) ? PushType.Branch :
@@ -129,7 +107,7 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
         const pattern = trigger.triggerTemplate?.branchName ?? trigger.triggerTemplate?.tagName ?? '---';
 
         triggerArray.push({
-            serviceName: repoName,
+            serviceName: repoName || '---',
             serviceCategory,
             repoType,
             repoHost,
