@@ -1,78 +1,66 @@
-import { google } from 'googleapis';
-import { config } from './config.js';
+import moment from 'moment';
 
-export type Service = {
-    serviceName: string;
-    serviceCategory: string;
-    url: string;
-    status: boolean;
-    branchName: string;
-    commitSha: string;
-    lastDeployed: string;
-    lastRevision: string;
-    activeRevisions?: string[][];
+
+interface Alert {
+    message: string;
+    condition: { type: string; creator_user_id: string };
 }
 
-export async function enumerateServices(filtered: boolean = false) {
-    const auth = new google.auth.GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
-    const cloudRun = google.run({ version: 'v1', auth: auth });
+export interface Options {
+    project: string;
+    serviceName?: string;
+    error?: string;
+    pollInterval: number;
+}
+interface Message {
+    message: string;
+    timestamp: string;
+}
 
-    const res = await cloudRun.namespaces.services.list({ parent: `namespaces/${config.PROJECT_ID}` });
+export function pollServiceAlerts(options: Options): Promise<Alert[]> {
+    let _randomAlerts = [];
 
-    const services = res.data.items || [];
-    let serviceArray: Service[] = [];
-
-    services.sort((a: any, b: any) => (a.metadata?.name ?? '').localeCompare(b.metadata?.name ?? ''));
-
-    for (const service of services) {
-        if (filtered && config.FILTERED_SERVICES.length > 0 && !config.FILTERED_TRIGGERS.find((n: string) => n === service.metadata?.name)) {
-            continue;
-        }
-        const serviceName = service.metadata?.name ?? '';
-        const serviceCategory = config.BACKEND_SERVICES.includes(serviceName) ? 'BACKEND SERVICES' :
-                                config.BACKOFFICE_SERVICES.includes(serviceName) ? 'BACKOFFICE SERVICES' :
-                                config.BRIDGE_SERVICES.includes(serviceName) ? 'BRIDGE SERVICES' :
-                                config.MONITORING_SERVICES.includes(serviceName) ? 'MONITORING SERVICES' :
-                                config.DATASCIENCE_SERVICES.includes(serviceName) ? 'DATASCIENCE SERVICES' :
-                                'OTHER';
-        const url = service.status?.url ?? '';
-        const status = (service.status?.conditions?.find((condition: any) => condition.type === 'Ready')?.status === 'True');
-        const lastRevisionName = service.status?.latestReadyRevisionName;
-        const lastRevision = lastRevisionName ? lastRevisionName.substring(serviceName.length + 1, lastRevisionName.length) : '---';
-
-        const lastDeployTimestamp = service.status?.conditions?.find((condition: any) => condition.type === 'Ready')?.lastTransitionTime;
-        const lastDeployed = lastDeployTimestamp ? new Intl.DateTimeFormat('en-CA', config.DATE_FORMAT).format(new Date(lastDeployTimestamp)).replace(',', '') : '---';
-        const [branchName, _, commitSha] = service.metadata?.labels?.['deploy_stamp']?.split('-') || '';
-
-        // let hasOnlineRevisions = false;
-        let activeRevisions = [];
-        for (const revision of service.status?.traffic || []) {
-            const revisionId = revision.revisionName ? revision.revisionName.substring(serviceName.length + 1, revision.revisionName.length) : '---';
-            if (revisionId === lastRevision) {
-                continue;
-            }
-            activeRevisions.push([revisionId, (`${revision.percent ?? 0}%`)]);
-        }
-
-        serviceArray.push({
-            serviceName,
-            serviceCategory,
-            status,
-            url: url,
-            branchName: branchName ?? '',
-            commitSha: commitSha ?? '',
-            lastDeployed: lastDeployed,
-            lastRevision,
-            activeRevisions
+    for (let i = 0; i < 10; i++) {
+        _randomAlerts.push({
+            message: "alert-" + options.project + "-" + generateRandomMessage(),
+            condition: { type: "mild", creator_user_id: "diego" }
         });
     }
 
-    serviceArray.sort((a, b) => {
-        if (a.serviceCategory === b.serviceCategory) {
-            return a.serviceName.localeCompare(b.serviceName);
-        }
-        return a.serviceCategory.localeCompare(b.serviceCategory);
-    });
+    return Promise.resolve(_randomAlerts);
+};
 
-    return serviceArray;
+export function pollLastMessagesOfService(options: Options): Promise<Message[]> {
+    let _randomMessages = [];
+    if (options.error) {
+        _randomMessages.push({ "message": options.error, "timestamp": moment().format() });
+    }
+    for (let i = 0; i < 10; i++) {
+        _randomMessages.push({ "message": options.serviceName + "-" + generateRandomMessage(), "timestamp": moment().format() });
+    }
+
+    return Promise.resolve(_randomMessages);
+};
+
+export function pollServiceThroughput(_: Options): Promise<number> {
+    let _randomThroughput = Math.floor(Math.random() * 34);
+    return Promise.resolve(_randomThroughput);
+};
+
+export function pollTotalThroughput(_: Options): Promise<number> {
+    let _randomThroughput = Math.floor(Math.random() * 34);
+    return Promise.resolve(_randomThroughput);
+};
+
+
+
+function generateRandomMessage(): string {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let length = 10;
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters.charAt(randomIndex);
+    }
+    return result;
 }
