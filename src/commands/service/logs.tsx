@@ -17,8 +17,8 @@ const logLinkSuffix =
 `;storageScope=project;summaryFields=${encodeURIComponent("resource/labels/revision_name")},${encodeURIComponent("labels/deploy_stamp")},${encodeURIComponent("jsonPayload/sourceLocation/file")}:false:32:beginning;lfeCustomFields="${encodeURIComponent("labels/deploy_stamp")};cursorTimestamp=${new Date().toISOString()};duration=${period}?project=${config.PROJECT_ID}&pli=1&invt=Abea-Q`;
 const logLinkJoinOperator = `OR `;
 
-async function getServiceLogsLink(filtered: boolean = false, includeAll: boolean = false): Promise<string> {
-    const services = await cloudrun.enumerateServices(filtered);
+async function getServiceLogsLink(includeAll: boolean = false): Promise<string> {
+    const services = await cloudrun.enumerateServices(includeAll);
     let revisionsArray: string[] = [];
     let currentCategory = '';
     let firstElem = true;
@@ -60,8 +60,7 @@ type Props = { options: zod.infer<typeof options>; };
 
 // CLI default function
 export default function devenv_service_list({options}: Props) {
-    const filtered = false;
-    getServiceLogsLink(filtered, options.all).then((link) => {
+    getServiceLogsLink(options.all).then((link) => {
         console.log(link);
         open(link);
     });

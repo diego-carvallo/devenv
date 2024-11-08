@@ -14,7 +14,7 @@ export type Service = {
     activeRevisions?: string[][];
 }
 
-export async function enumerateServices(filtered: boolean = false) {
+export async function enumerateServices(includeAll: boolean = false) {
     const auth = new google.auth.GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
     const cloudRun = google.run({ version: 'v1', auth: auth });
 
@@ -24,10 +24,10 @@ export async function enumerateServices(filtered: boolean = false) {
     
     let serviceArray: Service[] = [];
     for (const service of services) {
-        if (filtered && config.FILTERED_SERVICES.length > 0 && !config.FILTERED_TRIGGERS.find((n: string) => n === service.metadata?.name)) {
+        const serviceName = service.metadata?.name ?? '';
+        if(!includeAll && common.excludeService(serviceName)) {
             continue;
         }
-        const serviceName = service.metadata?.name ?? '';
         const serviceCategory = common.getServiceCategory(serviceName);
         const url = service.status?.url ?? '';
         const status = (service.status?.conditions?.find((condition: any) => condition.type === 'Ready')?.status === 'True');

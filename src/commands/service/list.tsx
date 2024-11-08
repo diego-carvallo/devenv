@@ -5,6 +5,7 @@ import readline from 'readline';
 import chalk from 'chalk';
 import zod from 'zod';
 import * as cloudrun from '../../lib/gcp-cloudrun-v1.js';
+import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
 const tableConfig: TableUserConfig = {
     columns: [
@@ -13,9 +14,10 @@ const tableConfig: TableUserConfig = {
     spanningCells: [ ],
 };
 
-async function getServiceList(filtered: boolean = false): Promise<string[][]> {
-    const services = await cloudrun.enumerateServices(filtered);
-    const header = ['CATEGORY', 'NAME', //'URL', 
+async function getServiceList(includeAll: boolean = false): Promise<string[][]> {
+    const services = await cloudrun.enumerateServices(includeAll);
+    const triggers = await cloudbuild.enumerateTriggers(includeAll);
+    const header = ['CATEGORY', 'NAME', 'PUSH-TO-TAG TRIGGER', 'PUSH-TO-BRANCH TRIGGER', //'URL', 
          'BRANCH_NAME', 'COMMIT', 'LAST_DEPLOYED', 'LAST_REVISION', 'BACKUP_REVISION'].map(text => chalk.cyan(text));
     const data = [ header ];
 
@@ -36,9 +38,15 @@ async function getServiceList(filtered: boolean = false): Promise<string[][]> {
             startIndex = index;
             categorySize = 1;
         }
+
+        const pushToTagTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.Tag)?.pattern || '---' ;
+        const pushToTagBranchTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.Branch)?.pattern || '---' ;
+        
         data.push([
             chalk.cyan(s.serviceCategory),
             s.serviceName,
+            pushToTagTrigger !== '/dev-*/i' ? chalk.red(pushToTagTrigger) : chalk.green(pushToTagTrigger),
+            pushToTagBranchTrigger !== '^develop$' ? chalk.red(pushToTagBranchTrigger) : chalk.green(pushToTagBranchTrigger),
             // s.url,
             s.branchName,
             s.commitSha,
@@ -60,15 +68,14 @@ async function getServiceList(filtered: boolean = false): Promise<string[][]> {
 export const alias = 'l';
 export const options = zod.object({
                                     w: zod.boolean().describe('Watch for changes'),
+                                    all: zod.boolean().describe('Include DATASCIENCE and MONITORING services'),
                                  });
 type Props = { options: zod.infer<typeof options>; };
 
 // CLI default function
 export default function devenv_service_list({options}: Props) {
-    const filtered = false;
-
     const renderTable = async () => {
-        const list = await getServiceList(filtered);
+        const list = await getServiceList(options.all);
         if (options.w) {
             readline.cursorTo(process.stdout, 0, 0);
             readline.clearScreenDown(process.stdout);

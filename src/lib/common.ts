@@ -1,12 +1,19 @@
 import { config } from './config.js';
 
+export function getServiceName(repoName: string|undefined) {
+    if (repoName && repoName in config.ALIASES) {
+        return config.ALIASES[repoName];
+    }
+    return repoName;
+}
+
 export function getServiceCategory(serviceName: string|undefined) {
     const serviceCategory = config.BACKEND_SERVICES.includes(serviceName) ? 'BACKEND SERVICES' :
-                            config.BACKOFFICE_SERVICES.includes(serviceName) ? 'BACKOFFICE SERVICES' :
-                            config.BRIDGE_SERVICES.includes(serviceName) ? 'BRIDGE SERVICES' :
-                            config.MONITORING_SERVICES.includes(serviceName) ? 'MONITORING SERVICES' :
-                            config.DATASCIENCE_SERVICES.includes(serviceName) ? 'DATASCIENCE SERVICES' :
-                            'OTHER';
+                          config.BACKOFFICE_SERVICES.includes(serviceName) ? 'BACKOFFICE SERVICES' :
+                          config.BRIDGE_SERVICES.includes(serviceName) ? 'BRIDGE SERVICES' :
+                          config.MONITORING_SERVICES.includes(serviceName) ? 'MONITORING SERVICES' :
+                          config.DATASCIENCE_SERVICES.includes(serviceName) ? 'DATASCIENCE SERVICES' :
+                          'OTHER';
     return serviceCategory;
 }
 
@@ -31,9 +38,9 @@ export function splitRepoName(repoLongName: string|undefined|null) {
     if(repoHost) {
         repoHost = repoHost.replace(/^./, (char: string) => char.toUpperCase());
     }
+    repoShortName = `${repoProject}/${repository.join('-')}`;
     if (repoProject === "brainfinance") {
         repoShortName = `${repository.join('-')}`;
     }
-    repoShortName = `${repoProject}/${repository.join('-')}`;
     return [repoHost, repoProject, repoShortName]
 }

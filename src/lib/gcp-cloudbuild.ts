@@ -78,16 +78,13 @@ export async function updateTriggers(filtered: boolean, newType: PushType): Prom
     return triggersUpdated;
 }
 
-export async function enumerateTriggers(filtered: boolean = false): Promise<Trigger[]> {
+export async function enumerateTriggers(includeAll: boolean = false): Promise<Trigger[]> {
     const [triggers] = await gcloudbuild.listBuildTriggers({ projectId: config.PROJECT_ID });
 
     let triggerArray: Trigger[] = [];
 
     triggers.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
-    triggers.forEach(trigger => {
-        if (filtered && config.FILTERED_SERVICES.length > 0 && !config.FILTERED_TRIGGERS.find((n:string) => n === trigger.name)) {
-            return;
-        }
+    for (const trigger of triggers) {
         const name = trigger.name ?? '---';
         const repoType = trigger.github ? "GitHub"
             : (trigger.sourceToBuild?.uri?.includes('bitbucket')) ? "Bitbucket"
@@ -95,7 +92,12 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
             : "unknown";
         const labels = trigger.tags?.join(', ') ?? '---';
         const [repoHost, repoProject, repoName] = common.splitRepoName(trigger.triggerTemplate?.repoName);
-        const serviceCategory = common.getServiceCategory(repoName);
+        const serviceName = common.getServiceName(repoName);
+        const serviceCategory = common.getServiceCategory(serviceName);
+
+        if(!includeAll && common.excludeService(serviceName)) {
+            continue;
+        }
 
         const pushType = (trigger.triggerTemplate) ? (
             (trigger.triggerTemplate.branchName) ? PushType.Branch :
@@ -107,7 +109,7 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
         const pattern = trigger.triggerTemplate?.branchName ?? trigger.triggerTemplate?.tagName ?? '---';
 
         triggerArray.push({
-            serviceName: repoName || '---',
+            serviceName: serviceName || '---',
             serviceCategory,
             repoType,
             repoHost,
@@ -119,7 +121,15 @@ export async function enumerateTriggers(filtered: boolean = false): Promise<Trig
             pushType,
             pattern
         });
+    }
+
+    triggerArray?.sort((a, b) => {
+        if (a.serviceCategory === b.serviceCategory) {
+            return a.serviceName.localeCompare(b.serviceName);
+        }
+        return a.serviceCategory.localeCompare(b.serviceCategory);
     });
+
 
     return triggerArray;
 }
