@@ -14,7 +14,7 @@ export const options = zod.object({
 type Props = { options: zod.infer<typeof options>; };
 
 async function getUpdatedTriggerList(filtered: boolean = false, newPushType: cloudbuild.PushType): Promise<string[][]> {
-    const triggers = await cloudbuild.updateTriggers(filtered, newPushType);
+    const triggers = await cloudbuild.triggerMigration001(filtered, newPushType);
     const header = ['REPO', 'TRIGGER NAME', 'LABELS', 'PUSH TYPE', 'PATTERN'].map(text => chalk.cyan(text));
     const data = [ header ];
     triggers.forEach(t => {

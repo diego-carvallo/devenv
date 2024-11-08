@@ -1,6 +1,8 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
 import { config } from './config.js';
 import * as common from './common.js';
+import * as cloudrun from './gcp-cloudrun-v1.js';
+
 
 const gcloudbuild = new CloudBuildClient();
 
@@ -31,52 +33,6 @@ export type TriggerUpdated = Trigger & {
     afterPattern: string;
 }
 
-export async function updateTriggers(filtered: boolean, newType: PushType): Promise<TriggerUpdated[]> {
-    const triggers = await enumerateTriggers(filtered);
-
-    let triggersUpdated: TriggerUpdated[] = [];
-
-    for (const t of triggers) {
-        if(filtered && !config.FILTERED_TRIGGERS.find((n:string) => n === t.name)) {
-            continue;
-        }
-        if (!t.id) {
-            continue;
-        }
-        const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id });
-        if (!trigger) {
-            continue;
-        }
-
-        // update trigger
-        let afterPushType: string = "";
-        let afterPattern: string = "";
-        if (newType === PushType.Branch) {
-            afterPushType = PushType.Branch;
-            afterPattern = config.PUSH_TO_BRANCH_PATTERN;
-            trigger.triggerTemplate!.branchName = afterPattern;
-            trigger.triggerTemplate!.tagName = undefined;
-        } else if (newType === PushType.Tag) {
-            afterPushType = PushType.Tag;
-            afterPattern = config.PUSH_TO_TAG_PATTERN;
-            trigger.triggerTemplate!.branchName = undefined;
-            trigger.triggerTemplate!.tagName = afterPattern;
-        } else {
-            continue;
-        }
-        trigger.tags = Array.from(new Set([...(trigger.tags || []), ...config.TRIGGER_LABELS]));
-        await gcloudbuild.updateBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id, trigger });
-        triggersUpdated.push({
-            ...t,
-            beforePushType: t.pushType,
-            beforePattern: t.pattern,
-            afterPushType,
-            afterPattern
-        });
-    }
-
-    return triggersUpdated;
-}
 
 export async function enumerateTriggers(includeAll: boolean = false): Promise<Trigger[]> {
     const [triggers] = await gcloudbuild.listBuildTriggers({ projectId: config.PROJECT_ID });
@@ -134,3 +90,100 @@ export async function enumerateTriggers(includeAll: boolean = false): Promise<Tr
     return triggerArray;
 }
 
+export async function normalizePattern(t: Trigger, filtered: boolean, newType: PushType): Promise<TriggerUpdated|undefined> {
+    if(filtered && !config.FILTERED_TRIGGERS.find((n:string) => n === t.name)) {
+        return;
+    }
+    if (!t.id) {
+        return;
+    }
+    const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id });
+    if (!trigger) {
+        return;
+    }
+
+    // update trigger
+    let afterPushType: string = "";
+    let afterPattern: string = "";
+    if (newType === PushType.Branch) {
+        afterPushType = PushType.Branch;
+        afterPattern = config.PUSH_TO_BRANCH_PATTERN;
+        trigger.triggerTemplate!.branchName = afterPattern;
+        trigger.triggerTemplate!.tagName = undefined;
+    } else if (newType === PushType.Tag) {
+        afterPushType = PushType.Tag;
+        afterPattern = config.PUSH_TO_TAG_PATTERN;
+        trigger.triggerTemplate!.branchName = undefined;
+        trigger.triggerTemplate!.tagName = afterPattern;
+    } else {
+        return;
+    }
+    trigger.tags = Array.from(new Set([...(trigger.tags || []), ...config.TRIGGER_LABELS]));
+    await gcloudbuild.updateBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id, trigger });
+    return {
+        ...t,
+        beforePushType: t.pushType,
+        beforePattern: t.pattern,
+        afterPushType,
+        afterPattern
+    };
+}
+
+export async function copyTrigger(t: Trigger, filtered: boolean, newType: PushType): Promise<TriggerUpdated|undefined> {
+
+
+}
+
+export async function triggerMigration001(filtered: boolean, newType: PushType): Promise<TriggerUpdated[]> {
+    const triggers = await enumerateTriggers(filtered);
+
+    let triggersUpdated: TriggerUpdated[] = [];
+
+    for (const t of triggers) {
+        let updatedTrigger = await normalizePattern(t, filtered, newType);
+        if (updatedTrigger) {
+            triggersUpdated.push(updatedTrigger);
+        }
+    }
+    return triggersUpdated;
+}
+
+
+export async function triggerMigration002(filtered: boolean, newType: PushType): Promise<TriggerUpdated[]> {
+    const services = await cloudrun.enumerateServices(true);
+    const triggers = await enumerateTriggers(true);
+    let triggersUpdated: TriggerUpdated[] = [];
+
+    for (const s of services) {
+        const pushToTagTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === PushType.Tag);
+        const pushToTagBranchTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === PushType.Branch);
+        
+        if (pushToTagTrigger && pushToTagBranchTrigger) {
+            continue;
+        }
+        if (!pushToTagTrigger && !pushToTagBranchTrigger) {
+            continue;
+        }
+        if (pushToTagTrigger && !pushToTagBranchTrigger) {
+            let updatedTrigger = await normalizePattern(pushToTagTrigger, filtered, PushType.Tag);
+            if (updatedTrigger) {
+                triggersUpdated.push(updatedTrigger);
+            }
+            let createdTrigger = await copyTrigger(pushToTagTrigger, filtered, PushType.Branch);
+            if (createdTrigger) {
+                triggersUpdated.push(createdTrigger);
+            }
+        }
+        if (!pushToTagTrigger && pushToTagBranchTrigger) {
+            let updatedTrigger = await normalizePattern(pushToTagBranchTrigger, filtered, PushType.Branch);
+            if (updatedTrigger) {
+                triggersUpdated.push(updatedTrigger);
+            }
+            let createdTrigger = await copyTrigger(pushToTagBranchTrigger, filtered, PushType.Tag);
+            if (createdTrigger) {
+                triggersUpdated.push(createdTrigger);
+            }
+        }
+    }
+    return triggersUpdated;
+}

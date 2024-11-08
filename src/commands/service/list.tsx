@@ -4,6 +4,7 @@ import { Newline, Text } from 'ink';
 import readline from 'readline';
 import chalk from 'chalk';
 import zod from 'zod';
+import { config } from '../../lib/config.js';
 import * as cloudrun from '../../lib/gcp-cloudrun-v1.js';
 import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
@@ -45,8 +46,8 @@ async function getServiceList(includeAll: boolean = false): Promise<string[][]> 
         data.push([
             chalk.cyan(s.serviceCategory),
             s.serviceName,
-            pushToTagTrigger !== '/dev-*/i' ? chalk.red(pushToTagTrigger) : chalk.green(pushToTagTrigger),
-            pushToTagBranchTrigger !== '^develop$' ? chalk.red(pushToTagBranchTrigger) : chalk.green(pushToTagBranchTrigger),
+            pushToTagTrigger !== config.PUSH_TO_TAG_PATTERN ? chalk.red(pushToTagTrigger) : chalk.green(pushToTagTrigger),
+            pushToTagBranchTrigger !== config.PUSH_TO_BRANCH_PATTERN ? chalk.red(pushToTagBranchTrigger) : chalk.green(pushToTagBranchTrigger),
             // s.url,
             s.branchName,
             s.commitSha,
