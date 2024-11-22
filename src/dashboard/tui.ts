@@ -1,7 +1,7 @@
 import blessed, { Widgets } from "blessed";
 import fs from 'fs';
 import contrib from "blessed-contrib";
-import * as cloudrun from '../lib/gcp-cloudrun-v1.js';
+import * as cloudrun from '../lib/gcp-cloudrun-googleapis.js';
 
 interface Options {
     onServiceChange: (el: Widgets.BlessedElement) => void;

@@ -1,7 +1,7 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
 import { config } from './config.js';
 import * as common from './common.js';
-import * as cloudrun from './gcp-cloudrun-v1.js';
+import * as cloudrun from './gcp-cloudrun-googleapis.js';
 
 
 const gcloudbuild = new CloudBuildClient();

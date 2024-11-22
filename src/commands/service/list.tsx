@@ -5,7 +5,7 @@ import readline from 'readline';
 import chalk from 'chalk';
 import zod from 'zod';
 import { config } from '../../lib/config.js';
-import * as cloudrun from '../../lib/gcp-cloudrun-v1.js';
+import * as cloudrun from '../../lib/gcp-cloudrun-googleapis.js';
 import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
 const tableConfig: TableUserConfig = {
@@ -18,7 +18,7 @@ const tableConfig: TableUserConfig = {
 async function getServiceList(includeAll: boolean = false): Promise<string[][]> {
     const services = await cloudrun.enumerateServices(includeAll);
     const triggers = await cloudbuild.enumerateTriggers(includeAll);
-    const header = ['CATEGORY', 'NAME', 'PUSH-TO-TAG TRIGGER', 'PUSH-TO-BRANCH TRIGGER', //'URL', 
+    const header = ['CATEGORY', 'NAME', 'PUSH-TO-TAG TRIGGER', 'PUSH-TO-BRANCH TRIGGER', //'URL',
          'BRANCH_NAME', 'COMMIT', 'LAST_DEPLOYED', 'LAST_REVISION', 'BACKUP_REVISION'].map(text => chalk.cyan(text));
     const data = [ header ];
 
@@ -42,7 +42,7 @@ async function getServiceList(includeAll: boolean = false): Promise<string[][]> 
 
         const pushToTagTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.Tag)?.pattern || '---' ;
         const pushToTagBranchTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.Branch)?.pattern || '---' ;
-        
+
         data.push([
             chalk.cyan(s.serviceCategory),
             s.serviceName,

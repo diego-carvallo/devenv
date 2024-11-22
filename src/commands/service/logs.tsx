@@ -5,15 +5,15 @@ import * as common from '../../lib/common.js';
 import zod from 'zod';
 import open from 'open';
 
-import * as cloudrun from '../../lib/gcp-cloudrun-v1.js';
+import * as cloudrun from '../../lib/gcp-cloudrun-googleapis.js';
 
 const period = "PT3H";
-const logLinkPrefix = 
+const logLinkPrefix =
 `https://console.cloud.google.com/logs/query;query=resource.type = "cloud_run_revision"
 resource.labels.location = "${config.REGION}"
 severity>=DEFAULT
 `;
-const logLinkSuffix = 
+const logLinkSuffix =
 `;storageScope=project;summaryFields=${encodeURIComponent("resource/labels/revision_name")},${encodeURIComponent("labels/deploy_stamp")},${encodeURIComponent("jsonPayload/sourceLocation/file")}:false:32:beginning;lfeCustomFields="${encodeURIComponent("labels/deploy_stamp")};cursorTimestamp=${new Date().toISOString()};duration=${period}?project=${config.PROJECT_ID}&pli=1&invt=Abea-Q`;
 const logLinkJoinOperator = `OR `;
 
@@ -46,7 +46,7 @@ async function getServiceLogsLink(includeAll: boolean = false): Promise<string> 
     });
 
     let revisionsQuery = revisionsArray.join("\n");
-    const result = `${logLinkPrefix}${revisionsQuery}${logLinkSuffix}`; 
+    const result = `${logLinkPrefix}${revisionsQuery}${logLinkSuffix}`;
     return encodeURI(result);
 }
 

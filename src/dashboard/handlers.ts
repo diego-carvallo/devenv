@@ -1,6 +1,6 @@
 import moment from 'moment';
 import * as tui from './tui.js';
-import * as cloudrun from '../lib/gcp-cloudrun-v1.js';
+import * as cloudrun from '../lib/gcp-cloudrun-googleapis.js';
 
 interface Message {
     message: string;
