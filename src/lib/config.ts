@@ -10,18 +10,18 @@ function readJsoncFile(filePath: string) {
         throw new Error(`Error reading or parsing file ${filePath}: ${error}`);
     }
 }
-  
+
 function loadConfig(): any {
     const configPath = path.join(path.dirname(new URL(import.meta.url).pathname), '..', '..', 'config.development.jsonc');
     const config = readJsoncFile(configPath);
     if (!config) {
         throw new Error("No config file found");
-    }    
+    }
 
-    for (const envvar of ["PROJECT_ID", "TRIGGER_LABELS", "PUSH_TO_BRANCH_PATTERN", "PUSH_TO_TAG_PATTERN", "FILTERED_TRIGGERS"]) {
+    for (const envvar of ["PROJECT_ID", "TRIGGER_LABELS", "PUSH_TO_BRANCH_PATTERN", "PUSH_TO_TAG_PATTERN", "WHITELISTED_SERVICES"]) {
         if (!config[envvar]) {
             throw new Error(`No value found for environment variable [${envvar}]`);
-        }    
+        }
     }
 
     return config;

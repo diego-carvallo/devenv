@@ -48,7 +48,7 @@ export async function enumerateTriggers(includeAll: boolean = false): Promise<Tr
             : "unknown";
         const labels = trigger.tags?.join(', ') ?? '---';
         const [repoHost, repoProject, repoName] = common.splitRepoName(trigger.triggerTemplate?.repoName);
-        const serviceName = common.getServiceName(repoName);
+        const serviceName = trigger?.substitutions?.['_SERVICE_NAME'] || common.getServiceName(repoName);
         const serviceCategory = common.getServiceCategory(serviceName);
 
         if(!includeAll && common.excludeService(serviceName)) {
@@ -90,8 +90,8 @@ export async function enumerateTriggers(includeAll: boolean = false): Promise<Tr
     return triggerArray;
 }
 
-export async function normalizePattern(t: Trigger, filtered: boolean, newType: PushType): Promise<TriggerUpdated|undefined> {
-    if(filtered && !config.FILTERED_TRIGGERS.find((n:string) => n === t.name)) {
+export async function normalizePattern(t: Trigger, whitelistedOnly: boolean, newType: PushType): Promise<TriggerUpdated|undefined> {
+    if(whitelistedOnly && !config.WHITELISTED_SERVICES.find((n:string) => n === t.serviceName)) {
         return;
     }
     if (!t.id) {
@@ -105,23 +105,29 @@ export async function normalizePattern(t: Trigger, filtered: boolean, newType: P
     // update trigger
     let afterPushType: string = "";
     let afterPattern: string = "";
+    trigger.name = trigger.name?.replace('-push-to-tag', '')
+    trigger.name = trigger.name?.replace('-push-to-branch', '')
+    trigger.name = trigger.name?.replace('-build-and-deploy', '')
     if (newType === PushType.Branch) {
         afterPushType = PushType.Branch;
         afterPattern = config.PUSH_TO_BRANCH_PATTERN;
         trigger.triggerTemplate!.branchName = afterPattern;
         trigger.triggerTemplate!.tagName = undefined;
+        trigger.name = `${trigger.name}-push-to-branch`;
     } else if (newType === PushType.Tag) {
         afterPushType = PushType.Tag;
         afterPattern = config.PUSH_TO_TAG_PATTERN;
         trigger.triggerTemplate!.branchName = undefined;
         trigger.triggerTemplate!.tagName = afterPattern;
+        trigger.name = `${trigger.name}-push-to-tag`;
     } else {
         return;
     }
     trigger.tags = Array.from(new Set([...(trigger.tags || []), ...config.TRIGGER_LABELS]));
-    await gcloudbuild.updateBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id, trigger });
+    let [updatedTrigger] = await gcloudbuild.updateBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id, trigger });
     return {
         ...t,
+        name: updatedTrigger?.name || '---',
         beforePushType: t.pushType,
         beforePattern: t.pattern,
         afterPushType,
@@ -129,18 +135,67 @@ export async function normalizePattern(t: Trigger, filtered: boolean, newType: P
     };
 }
 
-export async function copyTrigger(t: Trigger, filtered: boolean, newType: PushType): Promise<TriggerUpdated|undefined> {
+export async function cloneTrigger(t: Trigger, whitelistedOnly: boolean, newType: PushType): Promise<TriggerUpdated|undefined> {
+    if (whitelistedOnly && !config.WHITELISTED_SERVICES.find((n: string) => n === t.serviceName)) {
+        return;
+    }
+    if (!t.id) {
+        return;
+    }
+    const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id });
+    if (!trigger) {
+        return;
+    }
 
+    // Create a new trigger with the same configuration
+    const newTrigger = {
+        ...trigger,
+        id: undefined, // Ensure the ID is not set for the new trigger
+    };
+    let afterPushType: string = "";
+    let afterPattern: string = "";
+    if (newType === PushType.Branch) {
+        afterPushType = PushType.Branch;
+        afterPattern = config.PUSH_TO_BRANCH_PATTERN;
+        newTrigger.triggerTemplate!.branchName = afterPattern;
+        newTrigger.triggerTemplate!.tagName = undefined;
+        newTrigger.name = `${trigger.name?.replace('-push-to-tag', '')}-push-to-branch`
+    } else if (newType === PushType.Tag) {
+        afterPushType = PushType.Tag;
+        afterPattern = config.PUSH_TO_TAG_PATTERN;
+        newTrigger.triggerTemplate!.branchName = undefined;
+        newTrigger.triggerTemplate!.tagName = afterPattern;
+        newTrigger.name = `${trigger.name?.replace('-push-to-branch', '')}-push-to-tag`
+    } else {
+        return;
+    }
+    const [createdTrigger] = await gcloudbuild.createBuildTrigger({ projectId: config.PROJECT_ID, trigger: newTrigger });
 
+    if (!createdTrigger) {
+        return;
+    }
+
+    return {
+        ...t,
+        name: createdTrigger.name || '---',
+        beforePushType: t.pushType,
+        beforePattern: t.pattern,
+        afterPushType,
+        afterPattern
+    };
 }
 
-export async function triggerMigration001(filtered: boolean, newType: PushType): Promise<TriggerUpdated[]> {
-    const triggers = await enumerateTriggers(filtered);
+export async function triggerMigration001(whitelistedOnly: boolean, newType: PushType): Promise<TriggerUpdated[]> {
+    const triggers = await enumerateTriggers(true);
 
     let triggersUpdated: TriggerUpdated[] = [];
 
     for (const t of triggers) {
-        let updatedTrigger = await normalizePattern(t, filtered, newType);
+        if(whitelistedOnly && !config.WHITELISTED_SERVICES.find((n:string) => n === t.serviceName)) {
+            continue;
+        }
+
+        let updatedTrigger = await normalizePattern(t, whitelistedOnly, newType);
         if (updatedTrigger) {
             triggersUpdated.push(updatedTrigger);
         }
@@ -149,37 +204,41 @@ export async function triggerMigration001(filtered: boolean, newType: PushType):
 }
 
 
-export async function triggerMigration002(filtered: boolean, newType: PushType): Promise<TriggerUpdated[]> {
+export async function triggerMigration002(whitelistedOnly: boolean): Promise<TriggerUpdated[]> {
     const services = await cloudrun.enumerateServices(true);
     const triggers = await enumerateTriggers(true);
     let triggersUpdated: TriggerUpdated[] = [];
 
     for (const s of services) {
-        const pushToTagTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === PushType.Tag);
-        const pushToTagBranchTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === PushType.Branch);
-        
-        if (pushToTagTrigger && pushToTagBranchTrigger) {
+        if(whitelistedOnly && !config.WHITELISTED_SERVICES.find((n:string) => n === s.serviceName)) {
             continue;
         }
+        const pushToTagTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === PushType.Tag);
+        const pushToTagBranchTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === PushType.Branch);
         if (!pushToTagTrigger && !pushToTagBranchTrigger) {
             continue;
         }
-        if (pushToTagTrigger && !pushToTagBranchTrigger) {
-            let updatedTrigger = await normalizePattern(pushToTagTrigger, filtered, PushType.Tag);
+        if (pushToTagTrigger) {
+            let updatedTrigger = await normalizePattern(pushToTagTrigger, whitelistedOnly, PushType.Tag);
             if (updatedTrigger) {
                 triggersUpdated.push(updatedTrigger);
             }
-            let createdTrigger = await copyTrigger(pushToTagTrigger, filtered, PushType.Branch);
+        }
+        if (pushToTagBranchTrigger) {
+            let updatedTrigger = await normalizePattern(pushToTagBranchTrigger, whitelistedOnly, PushType.Branch);
+            if (updatedTrigger) {
+                triggersUpdated.push(updatedTrigger);
+            }
+        }
+
+        if (pushToTagTrigger && !pushToTagBranchTrigger) {
+            let createdTrigger = await cloneTrigger(pushToTagTrigger, whitelistedOnly, PushType.Branch);
             if (createdTrigger) {
                 triggersUpdated.push(createdTrigger);
             }
         }
         if (!pushToTagTrigger && pushToTagBranchTrigger) {
-            let updatedTrigger = await normalizePattern(pushToTagBranchTrigger, filtered, PushType.Branch);
-            if (updatedTrigger) {
-                triggersUpdated.push(updatedTrigger);
-            }
-            let createdTrigger = await copyTrigger(pushToTagBranchTrigger, filtered, PushType.Tag);
+            let createdTrigger = await cloneTrigger(pushToTagBranchTrigger, whitelistedOnly, PushType.Tag);
             if (createdTrigger) {
                 triggersUpdated.push(createdTrigger);
             }

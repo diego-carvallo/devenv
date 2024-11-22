@@ -11,7 +11,7 @@ export type Service = {
     lastRevision: string;
 }
 
-export async function enumerateServices(filtered: boolean = false) {
+export async function enumerateServices(whitelistedOnly: boolean = false) {
     const gcloudrun = new ServicesClient();
     const [services] = await gcloudrun.listServices({ parent: `projects/${config.PROJECT_ID}/locations/${config.REGION}` });
 
@@ -20,7 +20,7 @@ export async function enumerateServices(filtered: boolean = false) {
     services.sort((a: any, b: any) => (a.name ?? '').localeCompare(b.name ?? ''));
 
     for (const service of services) {
-        if (filtered && config.FILTERED_SERVICES.length > 0 && !config.FILTERED_TRIGGERS.find((n:string) => n === service.name)) {
+        if (whitelistedOnly && config.WHITELISTED_SERVICES.length > 0 && !config.WHITELISTED_SERVICES.find((n:string) => n === service.name)) {
             return;
         }
         const serviceName = service.name?.split('/services/').pop() || '';

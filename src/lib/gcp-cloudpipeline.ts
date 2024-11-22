@@ -23,7 +23,7 @@ export function pollServiceAlerts(options: Options): Promise<Alert[]> {
     for (let i = 0; i < 10; i++) {
         _randomAlerts.push({
             message: "alert-" + options.project + "-" + generateRandomMessage(),
-            condition: { type: "mild", creator_user_id: "diego" }
+            condition: { type: "error", creator_user_id: "diego" }
         });
     }
 
@@ -35,7 +35,7 @@ export function pollLastMessagesOfService(options: Options): Promise<Message[]> 
     if (options.error) {
         _randomMessages.push({ "message": options.error, "timestamp": moment().format() });
     }
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 30; i++) {
         _randomMessages.push({ "message": options.serviceName + "-" + generateRandomMessage(), "timestamp": moment().format() });
     }
 
@@ -56,7 +56,7 @@ export function pollTotalThroughput(_: Options): Promise<number> {
 
 function generateRandomMessage(): string {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let length = 10;
+    let length = 40;
     let result = '';
     for (let i = 0; i < length; i++) {
         const randomIndex = Math.floor(Math.random() * characters.length);
