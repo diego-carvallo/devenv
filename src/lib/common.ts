@@ -8,17 +8,16 @@ export function getServiceName(repoName: string|undefined) {
 }
 
 export function getServiceCategory(serviceName: string|undefined) {
-    const serviceCategory = config.BACKEND_SERVICES.includes(serviceName) ? 'BACKEND SERVICES' :
-                          config.BACKOFFICE_SERVICES.includes(serviceName) ? 'BACKOFFICE SERVICES' :
-                          config.BRIDGE_SERVICES.includes(serviceName) ? 'BRIDGE SERVICES' :
-                          config.MONITORING_SERVICES.includes(serviceName) ? 'MONITORING SERVICES' :
-                          config.DATASCIENCE_SERVICES.includes(serviceName) ? 'DATASCIENCE SERVICES' :
-                          'OTHER';
-    return serviceCategory;
+    for (const category in config.SERVICES) {
+        if (serviceName && config.SERVICES[category].includes(serviceName)) {
+            return `${category} SERVICES`;
+        }
+    }
+    return '_NOT IN PROD';
 }
 
 export function excludeService(serviceName: string) {
-    return !config.BACKEND_SERVICES.includes(serviceName) && !config.BACKOFFICE_SERVICES.includes(serviceName) && !config.BRIDGE_SERVICES.includes(serviceName);
+    return !config.SERVICES.BACKEND.includes(serviceName) && !config.SERVICES.BACKOFFICE.includes(serviceName) && !config.SERVICES.INTERCONNECTION.includes(serviceName);
 }
 
 export function getDateTime(lastDeployTimestamp: string|undefined|null) {

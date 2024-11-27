@@ -54,7 +54,7 @@ async function getServiceLogsLink(includeAll: boolean = false): Promise<string> 
 // CLI params definition
 export const alias = 'l';
 export const options = zod.object({
-                                    all: zod.boolean().describe('Include DATASCIENCE and MONITORING services'),
+                                    all: zod.boolean().describe('Include LOAN_AUTOMATION and MONITORING services'),
                                  });
 type Props = { options: zod.infer<typeof options>; };
 

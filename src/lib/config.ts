@@ -12,12 +12,13 @@ function readJsoncFile(filePath: string) {
 }
 
 function loadConfig(): any {
-    const configPath = path.join(path.dirname(new URL(import.meta.url).pathname), '..', '..', 'config.development.jsonc');
+    const configPath = path.join(path.dirname(new URL(import.meta.url).pathname), '..', '..', 'config.jsonc');
     const config = readJsoncFile(configPath);
     if (!config) {
         throw new Error("No config file found");
     }
 
+    // validate config file has the required minimal configs
     for (const envvar of ["PROJECT_ID", "TRIGGER_LABELS", "PUSH_TO_BRANCH_PATTERN", "PUSH_TO_TAG_PATTERN", "WHITELISTED_SERVICES"]) {
         if (!config[envvar]) {
             throw new Error(`No value found for environment variable [${envvar}]`);

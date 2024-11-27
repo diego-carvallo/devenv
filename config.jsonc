@@ -1,0 +1,139 @@
+{
+    "PROJECT_ID": "development-brainfinance",
+    "ENVIRONMENT": {
+        "DEV" : "development-brainfinance",
+        "STG" : "staging-brainfinance",
+        "PRD" : "production-brainfinance",
+    },
+    "REGION": "northamerica-northeast1",
+
+    "DATE_FORMAT": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit",
+        "hour": "2-digit",
+        "minute": "2-digit",
+        "second": "2-digit",
+        "hour12": false,
+        "timeZone": "America/Toronto"
+    },
+
+    "TRIGGER_LABELS": ["icash", "backend", "development"],
+
+    // "PUSH_TO_BRANCH_PATTERN": "^develop$|^feature|^bugfix",
+    "PUSH_TO_BRANCH_PATTERN": "^develop$",
+
+    "PUSH_TO_TAG_PATTERN": "^DEV-",
+
+     // Add service names here. If empty, all services will be listed.
+    "WHITELISTED_SERVICES": [
+        "alicia",
+        "maria",
+        "furious-application-api",
+    ],
+
+
+    "SERVICES": {
+
+        "BACKEND": [
+            "alicia",
+            "maria",
+            "furious-application-api",
+            "paydayloan",
+            "paydayloan-workers",
+            "payment-gateway",
+            "ptp-service",
+        ],
+
+        "BACKOFFICE": [
+            "admin-login-service",
+            "backoffice-frontend",
+            "backoffice-frontend-canary",
+            "backoffice-pubsub-ws-bridge",
+            "furious-backoffice-api",
+            "laravel-bo-api",
+            "main-account-finder-api",
+            "test-user-finder",
+            "collection-discount-api",
+            "customer-service-automation",
+        ],
+
+        "INTERCONNECTION": [
+            "aws-connect-bridge",
+            "clamav-malware-scanner",
+            "cloud-sql-proxy",
+            "clear-brainfinance-io-cloudflare-cache",
+            "contentful-cache",
+            "credit-health-service",
+            "datascience-api-nginx-proxy",
+            "document-template-service",
+            "furious-communication-api",
+            "furious-dms-api",
+            "furious-thirdparty-api",
+            "gcp-storage-bridge",
+            "pubsub-api-bridge",
+            "rudderstack-service",
+            "seon-service",
+            "sms-service",
+        ],
+
+        "LOAN_AUTOMATION": [
+            "ai-bridge",
+            "bank-account-parser",
+            "bankruptcy-detection",
+            "client-association-graphql",
+            "customer-segmentation-api",
+            "geolocation",
+            "kyc",
+            "legal-amount",
+            "loan-automation-api",
+            "loan-automation-dispatcher",
+            "loan-automation-worker",
+            "payroll-algorithm-api",
+            "payroll-service",
+            "transaction-categorizer-api",
+        ],
+
+        "REPORTING": [
+            "automated-qa",
+            "communications-monitoring",
+            "credit-report",
+            "expired-contracts",
+            "financial-metrics",
+            "icash-active-monitoring",
+            "marketing-service",
+            "service-monitoring",
+            "survival-analysis",
+
+        ],
+
+        "UNCATEGORIZED": [
+            "audit-service-api",
+            "feature-store-api",
+            "finance-api",
+            "correction-application-loan-automation-worker",
+            "list-applications-banking-actions-synch",
+        ],
+    },
+
+    "ALIASES": {
+        "backoffice-api":           "furious-backoffice-api",
+        "clamav-scanner":           "clamav-malware-scanner",
+        "client-association":       "client-association-graphql",
+        "collection-discount":      "collection-discount-api",
+        "communication-api":        "furious-communication-api",
+        // "communications-api":       "cloudflare-test",
+        "customer-segmentation":    "customer-segmentation-api",
+        "documentmanagementsystem": "furious-dms-api",
+        "finance-dashboard-etl":    "financial-metrics",
+        "frontend":                 "backoffice-frontend",
+        "main-account-finder":      "main-account-finder-api",
+        "marketing-user-service":   "marketing-service",
+        "payroll-algo-v3":          "payroll-algorithm-api",
+        "pubsub-ws-bridge":         "backoffice-pubsub-ws-bridge",
+        "stephania":                "furious-application-api",
+        "thirdparty-api":           "furious-thirdparty-api",
+        "transaction-categorizer":  "transaction-categorizer-api",
+    }
+
+}

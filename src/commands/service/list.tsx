@@ -45,7 +45,7 @@ async function getServiceList(includeAll: boolean = false): Promise<string[][]> 
 
         data.push([
             chalk.cyan(s.serviceCategory),
-            s.serviceName,
+            s.present ? s.serviceName :  chalk.red(s.serviceName),
             pushToTagTrigger !== config.PUSH_TO_TAG_PATTERN ? chalk.red(pushToTagTrigger) : chalk.green(pushToTagTrigger),
             pushToTagBranchTrigger !== config.PUSH_TO_BRANCH_PATTERN ? chalk.red(pushToTagBranchTrigger) : chalk.green(pushToTagBranchTrigger),
             // s.url,
@@ -69,7 +69,7 @@ async function getServiceList(includeAll: boolean = false): Promise<string[][]> 
 export const alias = 'l';
 export const options = zod.object({
                                     w: zod.boolean().describe('Watch for changes'),
-                                    all: zod.boolean().describe('Include DATASCIENCE and MONITORING services'),
+                                    all: zod.boolean().describe('Include LOAN_AUTOMATION and MONITORING services'),
                                  });
 type Props = { options: zod.infer<typeof options>; };
 

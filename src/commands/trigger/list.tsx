@@ -58,7 +58,7 @@ async function getTriggerList(includeAll: boolean = false): Promise<string[][]> 
 export const alias = 'l';
 export const options = zod.object({
                                     w: zod.boolean().describe('Watch for changes'),
-                                    all: zod.boolean().describe('Include DATASCIENCE and MONITORING services'),
+                                    all: zod.boolean().describe('Include LOAN_AUTOMATION and MONITORING services'),
                                  });
 type Props = { options: zod.infer<typeof options>; };
 

@@ -5,33 +5,33 @@ import * as handlers from '../../dashboard/handlers.js';
 import * as fs from 'fs';
 
 
-let config: gcloudpipeline.Options = { project: "XXYY", pollInterval: 1000 };
+let settings: gcloudpipeline.Settings = { project: "XXYY", pollInterval: 1000 };
 
 let services: cloudrun.Service[];
 
 function loadServices(_services: cloudrun.Service[]) {
     services = _services;
-    if (!config.serviceName) {
+    if (!settings.serviceName) {
         // Could happen on startup
-        config.serviceName = services[0]?.serviceName ?? '';
+        settings.serviceName = services[0]?.serviceName ?? '';
     }
-    const thisService = services.find((s) => s.serviceName === config.serviceName) || { serviceName: '???' };
+    const thisService = services.find((s) => s.serviceName === settings.serviceName) || { serviceName: '???' };
     tui.flush(thisService.serviceName, services);
 }
 
 function onServiceChange(blessedEl: { content: string }) {
     const serviceName = blessedEl.content;
-    config.serviceName = serviceName;
+    settings.serviceName = serviceName;
     tui.flush(serviceName, services);
 }
 
 async function poll(): Promise<void> {
     try {
         const [messages, serviceThroughput, totalThroughput, alerts] = await Promise.all([
-            gcloudpipeline.pollLastMessagesOfService(config),
-            gcloudpipeline.pollServiceThroughput(config),
-            gcloudpipeline.pollTotalThroughput(config),
-            gcloudpipeline.pollServiceAlerts(config),
+            gcloudpipeline.pollLastMessagesOfService(settings),
+            gcloudpipeline.pollServiceThroughput(settings),
+            gcloudpipeline.pollTotalThroughput(settings),
+            gcloudpipeline.pollServiceAlerts(settings),
         ]);
         handlers.updateMessagesList(messages);
         handlers.updateServiceThroughput(serviceThroughput);
@@ -42,7 +42,7 @@ async function poll(): Promise<void> {
         fs.appendFileSync('error.log', `${JSON.stringify(e)}\n`);
         console.error(e);
     } finally {
-        setTimeout(poll, config.pollInterval);
+        setTimeout(poll, settings.pollInterval);
     }
 }
 

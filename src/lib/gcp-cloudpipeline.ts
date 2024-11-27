@@ -6,7 +6,7 @@ interface Alert {
     condition: { type: string; creator_user_id: string };
 }
 
-export interface Options {
+export interface Settings {
     project: string;
     serviceName?: string;
     error?: string;
@@ -17,12 +17,12 @@ interface Message {
     timestamp: string;
 }
 
-export function pollServiceAlerts(options: Options): Promise<Alert[]> {
+export function pollServiceAlerts(settings: Settings): Promise<Alert[]> {
     let _randomAlerts = [];
 
     for (let i = 0; i < 10; i++) {
         _randomAlerts.push({
-            message: "alert-" + options.project + "-" + generateRandomMessage(),
+            message: "alert-" + settings.project + "-" + generateRandomMessage(),
             condition: { type: "error", creator_user_id: "diego" }
         });
     }
@@ -30,24 +30,24 @@ export function pollServiceAlerts(options: Options): Promise<Alert[]> {
     return Promise.resolve(_randomAlerts);
 };
 
-export function pollLastMessagesOfService(options: Options): Promise<Message[]> {
+export function pollLastMessagesOfService(settings: Settings): Promise<Message[]> {
     let _randomMessages = [];
-    if (options.error) {
-        _randomMessages.push({ "message": options.error, "timestamp": moment().format() });
+    if (settings.error) {
+        _randomMessages.push({ "message": settings.error, "timestamp": moment().format() });
     }
     for (let i = 0; i < 30; i++) {
-        _randomMessages.push({ "message": options.serviceName + "-" + generateRandomMessage(), "timestamp": moment().format() });
+        _randomMessages.push({ "message": settings.serviceName + "-" + generateRandomMessage(), "timestamp": moment().format() });
     }
 
     return Promise.resolve(_randomMessages);
 };
 
-export function pollServiceThroughput(_: Options): Promise<number> {
+export function pollServiceThroughput(_: Settings): Promise<number> {
     let _randomThroughput = Math.floor(Math.random() * 34);
     return Promise.resolve(_randomThroughput);
 };
 
-export function pollTotalThroughput(_: Options): Promise<number> {
+export function pollTotalThroughput(_: Settings): Promise<number> {
     let _randomThroughput = Math.floor(Math.random() * 34);
     return Promise.resolve(_randomThroughput);
 };
