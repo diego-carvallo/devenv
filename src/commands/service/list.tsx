@@ -7,15 +7,16 @@ import zod from 'zod';
 import { config } from '../../lib/config.js';
 import * as cloudrun from '../../lib/gcp-cloudrun.js';
 import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
+import * as utils from '../../lib/gcp-utils.js';
 
 const tableConfig = {
-    colWidths: [17, null, null, 19, null, null, null, null, null],
+    colWidths: [17, 30, ],
     wordWrap: true,
 };
 const header = ['CATEGORY',
                 `${chalk.bold(chalk.cyan('NAME'))}\n${chalk.italic(chalk.yellow('--> dev only'))}\n${chalk.italic(chalk.red('--> prd only'))}`,
-                'TRIGGER PATTERN', 'URL', 'BRANCH_NAME', 'COMMIT',
-                'LAST_DEPLOYED', 'LAST_REVISION', 'BACKUP_REVISION'].map(text => text.includes('only')? text: chalk.bold(chalk.cyan(text)));
+                'TRIGGER PATTERN', 'BRANCH NAME', 'COMMIT',
+                'LAST DEPLOYED', 'LAST REVISION', 'BACKUP REVISION', "LOGS"].map(text => text.includes('only')? text: chalk.bold(chalk.cyan(text)));
 
 
 async function getServiceList(includeAll: boolean = false): Promise<any[][]> {
@@ -24,20 +25,33 @@ async function getServiceList(includeAll: boolean = false): Promise<any[][]> {
     const data: any[][] = [];
 
     services?.forEach((s, _) => {
-        const triggerPattern = triggers.find((t) => t.serviceName === s.serviceName)?.pattern || '---';
         let row: any[] = [];
 
+        // category
         if(s.rowSpan) {
             row.push({ content: chalk.bold(chalk.cyan(s.serviceCategory)), rowSpan: s.rowSpan });
         }
-        row.push(s.present === "both" ? s.serviceName : s.present === "devOnly" ? chalk.yellow(s.serviceName)  : chalk.red(s.serviceName));
-        row.push(triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(triggerPattern) : triggerPattern);
-        row.push(s.url ? {content: s.url, href: s.url} : '---');
+        // name
+        let name = s.present === "both" ? s.serviceName : s.present === "devOnly" ? chalk.yellow(s.serviceName)  : chalk.red(s.serviceName);
+        row.push({ content: name, href: s.url});
+        // trigger
+        const trigger = triggers.find((t) => t.serviceName === s.serviceName);
+        const triggerPattern = trigger?.pattern || '---';
+        let triggerText = triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(triggerPattern) : triggerPattern;
+        row.push({ content: triggerText, href: utils.getTriggerUrl(s.serviceName) });
+        // branch
         row.push(s.branchName);
+        // commit
         row.push(s.commitSha);
-        row.push(s.lastDeployed);
-        row.push(s.status ? chalk.green(`${s.lastRevision}  ✔`) : chalk.red(`${s.lastRevision}  X`));
+        // last deployed
+        row.push({ content: s.lastDeployed, href: trigger?.name ? utils.getBuildsUrl(trigger?.name): '' });
+        // last revision
+        let lastRevision = s.status ? chalk.green(`${s.lastRevision}  ✔`) : chalk.red(`${s.lastRevision}  X`);
+        row.push({ content: lastRevision, href: utils.getRevisionsUrl(s.serviceName) });
+        // backup revision
         row.push(chalk.green(s.activeRevisions?.join(', ') ?? ''));
+        // logs
+        row.push({ content: 'logs', href: utils.getServiceLogsUrl(s.serviceName) });
 
         data.push(row);
     });

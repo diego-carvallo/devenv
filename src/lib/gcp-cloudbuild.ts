@@ -1,6 +1,6 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
 import { config } from './config.js';
-import * as common from './common.js';
+import * as utils from './gcp-utils.js';
 
 
 const gcloudbuild = new CloudBuildClient();
@@ -47,11 +47,11 @@ export async function enumerateTriggers(includeAll: boolean = false): Promise<Tr
             : (trigger.triggerTemplate?.repoName) ? "mirrored"
             : "unknown";
         const labels = trigger.tags?.join(', ') ?? '---';
-        const [repoHost, repoProject, repoName] = common.splitRepoName(trigger.triggerTemplate?.repoName);
-        const serviceName = trigger?.substitutions?.['_SERVICE_NAME'] || common.getRepoAlias(repoName);
-        const serviceCategory = common.getServiceCategory(serviceName);
+        const [repoHost, repoProject, repoName] = utils.splitRepoName(trigger.triggerTemplate?.repoName);
+        const serviceName = trigger?.substitutions?.['_SERVICE_NAME'] || utils.getRepoAlias(repoName);
+        const serviceCategory = utils.getServiceCategory(serviceName);
 
-        if(!includeAll && common.excludeService(serviceName)) {
+        if(!includeAll && utils.excludeService(serviceName)) {
             continue;
         }
 

@@ -1,6 +1,6 @@
 import { google, run_v1 } from 'googleapis';
 import { config } from './config.js';
-import * as common from './common.js';
+import * as utils from './gcp-utils.js';
 type GoogleService = run_v1.Schema$Service;
 
 export type ParsedService = {
@@ -86,16 +86,16 @@ export async function enumerateServices(includeAll: boolean = false): Promise<Pa
     let devServiceList: ParsedService[] = [];
     for (const service of services) {
         const serviceName = service.metadata?.name ?? '';
-        if(!includeAll && common.excludeService(serviceName)) {
+        if(!includeAll && utils.excludeService(serviceName)) {
             continue;
         }
-        const serviceCategory = common.getServiceCategory(serviceName);
+        const serviceCategory = utils.getServiceCategory(serviceName);
         const url = service.status?.url ?? '';
         const status = (service.status?.conditions?.find((condition: any) => condition.type === 'Ready')?.status === 'True');
         const lastRevisionName = service.status?.latestReadyRevisionName;
         const lastRevision = lastRevisionName ? lastRevisionName.substring(serviceName.length + 1, lastRevisionName.length) : '---------';
         const lastDeployTimestamp = service.status?.conditions?.find((condition: any) => condition.type === 'Ready')?.lastTransitionTime;
-        const lastDeployed = common.getDateTime(lastDeployTimestamp);
+        const lastDeployed = utils.getDateTime(lastDeployTimestamp);
         const [branchName, _, commitSha] = service.metadata?.labels?.['deploy_stamp']?.split('-') || '';
 
         let activeRevisions = [];
@@ -124,8 +124,8 @@ export async function enumerateServices(includeAll: boolean = false): Promise<Pa
     // find missing services available in prodOnly
     for (const prodService of prodServiceList) {
         const comparableServiceName = prodService.metadata?.name ?? '';
-        const comparableServiceCategory = common.getServiceCategory(comparableServiceName);
-        if(!includeAll && common.excludeService(comparableServiceName)) {
+        const comparableServiceCategory = utils.getServiceCategory(comparableServiceName);
+        if(!includeAll && utils.excludeService(comparableServiceName)) {
             continue;
         }
         if (!devServiceList.find((s) => s.serviceName === comparableServiceName)) {
