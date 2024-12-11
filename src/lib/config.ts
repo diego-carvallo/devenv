@@ -19,7 +19,7 @@ function loadConfig(): any {
     }
 
     // validate config file has the required minimal configs
-    for (const envvar of ["PROJECT_ID", "TRIGGER_LABELS", "PUSH_TO_BRANCH_PATTERN", "PUSH_TO_TAG_PATTERN", "WHITELISTED_SERVICES"]) {
+    for (const envvar of ["DEVELOPMENT_PROJECT_ID", "TRIGGER_LABELS", "TRIGGER_PATTERN_PUSH_TO_BRANCH", "WHITELISTED_SERVICES"]) {
         if (!config[envvar]) {
             throw new Error(`No value found for environment variable [${envvar}]`);
         }

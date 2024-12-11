@@ -13,11 +13,12 @@ export function getServiceCategory(serviceName: string|undefined) {
             return `${category} SERVICES`;
         }
     }
-    return '_NOT IN PROD';
+    return 'UNCATEGORIZED SERVICES';
 }
 
 export function excludeService(serviceName: string) {
-    return !config.SERVICES.BACKEND.includes(serviceName) && !config.SERVICES.BACKOFFICE.includes(serviceName) && !config.SERVICES.INTERCONNECTION.includes(serviceName);
+    return config.SERVICES.LOAN_AUTOMATION.includes(serviceName) ||
+           config.SERVICES.REPORTING.includes(serviceName);
 }
 
 export function getDateTime(lastDeployTimestamp: string|undefined|null) {

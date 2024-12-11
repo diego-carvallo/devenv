@@ -23,6 +23,7 @@
         "@types/ink-table": "^1.0.7",
         "blessed": "^0.1.81",
         "blessed-contrib": "^4.5.5",
+        "cli-table3": "^0.6.5",
         "googleapis": "^144.0.0",
         "ink": "^4.1.0",
         "ink-table": "^3.1.0",
@@ -30,7 +31,7 @@
         "moment": "^2.9.0",
         "pastel": "^2.0.0",
         "react": "^18.2.0",
-        "table": "^6.8.2",
+        "table": "^6.9.0",
         "zod": "^3.21.4"
     },
     "devDependencies": {

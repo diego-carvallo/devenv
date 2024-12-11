@@ -15,7 +15,7 @@ export async function _updateTrigger(t: Trigger, whitelistedOnly: boolean): Prom
     if (!t.id) {
         return;
     }
-    const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id });
+    const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.DEVELOPMENT_PROJECT_ID, triggerId: t.id });
     if (!trigger) {
         return;
     }
@@ -28,7 +28,7 @@ export async function _updateTrigger(t: Trigger, whitelistedOnly: boolean): Prom
     trigger.name = trigger.name?.replace('-build-and-deploy', '')
     // if (newType === PushType.PushToBranch) {
     //     afterPushType = PushType.PushToBranch;
-    //     afterPattern = config.PUSH_TO_BRANCH_PATTERN;
+    //     afterPattern = config.TRIGGER_PATTERN_PUSH_TO_BRANCH;
     //     trigger.triggerTemplate!.branchName = afterPattern;
     //     trigger.triggerTemplate!.tagName = undefined;
     //     trigger.name = `${trigger.name}-push-to-branch`;
@@ -42,7 +42,7 @@ export async function _updateTrigger(t: Trigger, whitelistedOnly: boolean): Prom
     //     return;
     // }
     trigger.tags = Array.from(new Set([...(trigger.tags || []), ...config.TRIGGER_LABELS]));
-    let [updatedTrigger] = await gcloudbuild.updateBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id, trigger });
+    let [updatedTrigger] = await gcloudbuild.updateBuildTrigger({ projectId: config.DEVELOPMENT_PROJECT_ID, triggerId: t.id, trigger });
     return {
         ...t,
         name: updatedTrigger?.name || '---',

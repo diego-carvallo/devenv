@@ -63,7 +63,7 @@ export function updateServiceThroughput(throughput: number): void {
     (throughputLine as any).setData(transformLineData(serviceThroughputData));
 };
 
-export function updateServicesList(services: cloudrun.Service[]): void {
+export function updateServicesList(services: cloudrun.ParsedService[]): void {
     const serviceList = tui.getWidget('serviceList');
     serviceList.setItems(services.map((s) => s.serviceName));
     serviceList.focus();

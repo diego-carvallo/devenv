@@ -7,9 +7,9 @@ import * as fs from 'fs';
 
 let settings: gcloudpipeline.Settings = { project: "XXYY", pollInterval: 1000 };
 
-let services: cloudrun.Service[];
+let services: cloudrun.ParsedService[];
 
-function loadServices(_services: cloudrun.Service[]) {
+function loadServices(_services: cloudrun.ParsedService[]) {
     services = _services;
     if (!settings.serviceName) {
         // Could happen on startup

@@ -35,7 +35,7 @@ export type TriggerUpdated = Trigger & {
 
 
 export async function enumerateTriggers(includeAll: boolean = false): Promise<Trigger[]> {
-    const [triggers] = await gcloudbuild.listBuildTriggers({ projectId: config.PROJECT_ID });
+    const [triggers] = await gcloudbuild.listBuildTriggers({ projectId: config.DEVELOPMENT_PROJECT_ID });
 
     let triggerArray: Trigger[] = [];
 
@@ -97,7 +97,7 @@ export async function cloneTrigger(t: Trigger, whitelistedOnly: boolean, newType
     if (!t.id) {
         return;
     }
-    const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.PROJECT_ID, triggerId: t.id });
+    const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.DEVELOPMENT_PROJECT_ID, triggerId: t.id });
     if (!trigger) {
         return;
     }
@@ -111,7 +111,7 @@ export async function cloneTrigger(t: Trigger, whitelistedOnly: boolean, newType
     let afterPattern: string = "";
     if (newType === PushType.PushToBranch) {
         afterPushType = PushType.PushToBranch;
-        afterPattern = config.PUSH_TO_BRANCH_PATTERN;
+        afterPattern = config.TRIGGER_PATTERN_PUSH_TO_BRANCH;
         newTrigger.triggerTemplate!.branchName = afterPattern;
         newTrigger.triggerTemplate!.tagName = undefined;
         // newTrigger.name = `${trigger.name?.replace('-push-to-tag', '')}-push-to-branch`
@@ -124,7 +124,7 @@ export async function cloneTrigger(t: Trigger, whitelistedOnly: boolean, newType
     } else {
         return;
     }
-    const [createdTrigger] = await gcloudbuild.createBuildTrigger({ projectId: config.PROJECT_ID, trigger: newTrigger });
+    const [createdTrigger] = await gcloudbuild.createBuildTrigger({ projectId: config.DEVELOPMENT_PROJECT_ID, trigger: newTrigger });
 
     if (!createdTrigger) {
         return;

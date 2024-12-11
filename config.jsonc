@@ -1,7 +1,7 @@
 {
     "REGION": "northamerica-northeast1",
-    "PROJECT_ID": "development-brainfinance",
-    "PROJECT_ID_COMPARABLE": "production-brainfinance",
+    "DEVELOPMENT_PROJECT_ID": "development-brainfinance",
+    "PRODUCTION_PROJECT_ID": "production-brainfinance",
 
     "DATE_FORMAT": {
         "year": "numeric",
@@ -16,10 +16,8 @@
 
     "TRIGGER_LABELS": ["icash", "backend", "development"],
 
-    // "PUSH_TO_BRANCH_PATTERN": "^develop$|^feature|^bugfix",
-    "PUSH_TO_BRANCH_PATTERN": "^develop$",
-
-    "PUSH_TO_TAG_PATTERN": "^DEV-",
+    // "TRIGGER_PATTERN_PUSH_TO_BRANCH": "^develop$|^feature|^bugfix",
+    "TRIGGER_PATTERN_PUSH_TO_BRANCH": "^develop$",
 
      // Add service names here. If empty, all services will be listed.
     "WHITELISTED_SERVICES": [
@@ -61,7 +59,6 @@
             "clear-brainfinance-io-cloudflare-cache",
             "contentful-cache",
             "credit-health-service",
-            "datascience-api-nginx-proxy",
             "document-template-service",
             "furious-communication-api",
             "furious-dms-api",
@@ -78,6 +75,7 @@
             "bankruptcy-detection",
             "client-association-graphql",
             "customer-segmentation-api",
+            "datascience-api-nginx-proxy",
             "geolocation",
             "kyc",
             "legal-amount",
@@ -90,10 +88,12 @@
         ],
 
         "REPORTING": [
+            "audit-service-api",
             "automated-qa",
             "communications-monitoring",
             "credit-report",
             "expired-contracts",
+            "feature-store-api",
             "financial-metrics",
             "icash-active-monitoring",
             "marketing-service",
@@ -103,8 +103,6 @@
         ],
 
         "UNCATEGORIZED": [
-            "audit-service-api",
-            "feature-store-api",
             "finance-api",
             "correction-application-loan-automation-worker",
             "list-applications-banking-actions-synch",

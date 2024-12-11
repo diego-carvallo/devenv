@@ -97,7 +97,7 @@ export function create(options: Options): void {
     });
 };
 
-export function flush(serviceName: string, services: cloudrun.Service[]): void {
+export function flush(serviceName: string, services: cloudrun.ParsedService[]): void {
     Object.keys(widgets).forEach((key) => {
         const w = widgets[key]!;
         if (w === widgets['serviceList']) {

@@ -4,7 +4,7 @@ steps:
       - '-c'
       - |
         set -e
-        echo PROJECT_ID=$PROJECT_ID
+        echo DEVELOPMENT_PROJECT_ID=$DEVELOPMENT_PROJECT_ID
         echo COMMIT_SHA=$COMMIT_SHA
         git --no-pager show -s --format=%s $COMMIT_SHA >> COMMIT_MESSAGE
         cat COMMIT_MESSAGE
@@ -13,7 +13,7 @@ steps:
           echo
           gcloud beta builds triggers run "${_SERVICE_NAME}-devenv-ci" \
                                           --branch=$REF_NAME \
-                                          --project=$PROJECT_ID
+                                          --project=$DEVELOPMENT_PROJECT_ID
         else
           echo "Skipping build as '[devenv ci]' was not found in the commit message."
           exit 0

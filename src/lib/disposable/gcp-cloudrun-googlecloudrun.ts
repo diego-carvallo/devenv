@@ -18,7 +18,7 @@ export type Service = {
 
 export async function enumerateServices(whitelistedOnly: boolean = false) {
     const gcloudrun = new ServicesClient();
-    const [services] = await gcloudrun.listServices({ parent: `projects/${config.PROJECT_ID}/locations/${config.REGION}` });
+    const [services] = await gcloudrun.listServices({ parent: `projects/${config.DEVELOPMENT_PROJECT_ID}/locations/${config.REGION}` });
 
     let serviceArray: Service[] = [];
 

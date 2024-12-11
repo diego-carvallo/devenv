@@ -1,69 +1,46 @@
 import React from 'react';
-import { table, TableUserConfig } from 'table';
+import Table from 'cli-table3';
 import { Newline, Text } from 'ink';
 import readline from 'readline';
 import chalk from 'chalk';
 import zod from 'zod';
-import terminalLink from 'terminal-link';
 import { config } from '../../lib/config.js';
 import * as cloudrun from '../../lib/gcp-cloudrun.js';
 import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
-const tableConfig: TableUserConfig = {
-    columns: {
-        0: { alignment: 'center', width: 11, wrapWord: true },
-        3: { alignment: 'center', width: 19, wrapWord: true },
-    },
-    spanningCells: [ ],
+const tableConfig = {
+    colWidths: [17, null, null, 19, null, null, null, null, null],
+    wordWrap: true,
 };
+const header = ['CATEGORY',
+                `${chalk.bold(chalk.cyan('NAME'))}\n${chalk.italic(chalk.yellow('--> dev only'))}\n${chalk.italic(chalk.red('--> prd only'))}`,
+                'TRIGGER PATTERN', 'URL', 'BRANCH_NAME', 'COMMIT',
+                'LAST_DEPLOYED', 'LAST_REVISION', 'BACKUP_REVISION'].map(text => text.includes('only')? text: chalk.bold(chalk.cyan(text)));
 
-async function getServiceList(includeAll: boolean = false): Promise<string[][]> {
+
+async function getServiceList(includeAll: boolean = false): Promise<any[][]> {
     const services = await cloudrun.enumerateServices(includeAll);
     const triggers = await cloudbuild.enumerateTriggers(includeAll);
-    const header = ['CATEGORY', 'NAME','TRIGGER PATTERN', 'URL',
-         'BRANCH_NAME', 'COMMIT', 'LAST_DEPLOYED', 'LAST_REVISION', 'BACKUP_REVISION'].map(text => chalk.cyan(text));
-    const data = [ header ];
+    const data: any[][] = [];
 
-    let currentCategory = '';
-    let startIndex = 0;
-    let categorySize = 0;
-    services?.forEach((s, index) => {
-        if (index === 0) {
-            tableConfig?.spanningCells?.splice(0, tableConfig?.spanningCells?.length);
-            currentCategory = s.serviceCategory;
-            startIndex = index;
-            categorySize += 1;
-        } else if (s.serviceCategory === currentCategory) {
-            categorySize += 1;
-        } else {
-            tableConfig?.spanningCells?.push({ col: 0, row: startIndex + 1, rowSpan: categorySize, verticalAlignment: 'middle' });
-            currentCategory = s.serviceCategory;
-            startIndex = index;
-            categorySize = 1;
+    services?.forEach((s, _) => {
+        const triggerPattern = triggers.find((t) => t.serviceName === s.serviceName)?.pattern || '---';
+        let row: any[] = [];
+
+        if(s.rowSpan) {
+            row.push({ content: chalk.bold(chalk.cyan(s.serviceCategory)), rowSpan: s.rowSpan });
         }
+        row.push(s.present === "both" ? s.serviceName : s.present === "devOnly" ? chalk.yellow(s.serviceName)  : chalk.red(s.serviceName));
+        row.push(triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(triggerPattern) : triggerPattern);
+        row.push(s.url ? {content: s.url, href: s.url} : '---');
+        row.push(s.branchName);
+        row.push(s.commitSha);
+        row.push(s.lastDeployed);
+        row.push(s.status ? chalk.green(`${s.lastRevision}  ✔`) : chalk.red(`${s.lastRevision}  X`));
+        row.push(chalk.green(s.activeRevisions?.join(', ') ?? ''));
 
-        // const pushToTagTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.PushToTag)?.pattern || '---' ;
-        const pushToTagBranchTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.PushToBranch)?.pattern || '---' ;
-        console.log(`[${s.url}]` + "\u001B]8;;https://google.com\u0007Google\u001B]8;;\u0007", terminalLink("url", s.url));
-        data.push([
-            chalk.cyan(s.serviceCategory),
-            s.present ? s.serviceName :  chalk.yellow(s.serviceName),
-            // pushToTagTrigger !== config.PUSH_TO_TAG_PATTERN ? chalk.red(pushToTagTrigger) : chalk.green(pushToTagTrigger),
-            pushToTagBranchTrigger !== config.PUSH_TO_BRANCH_PATTERN ? chalk.red(pushToTagBranchTrigger) : chalk.green(pushToTagBranchTrigger),
-            // terminalLink('url', s.url),
-            `\u001B]8;;https://google.com\u0007Google\u001B]8;;\u0007`,
-            // s.url,
-            s.branchName,
-            s.commitSha,
-            s.lastDeployed,
-            s.status ? chalk.green(`${s.lastRevision}  ✔`) : chalk.red(`${s.lastRevision}  X`),
-            chalk.green(s.activeRevisions?.join(', ') ?? ''),
-        ]);
+        data.push(row);
     });
-    // Add the last category span
-    if (services.length > 0) {
-        tableConfig?.spanningCells?.push({ col: 0, row: startIndex +1, rowSpan: categorySize, verticalAlignment: 'middle' });
-    }
 
     return data;
 }
@@ -85,7 +62,11 @@ export default function devenv_service_list({options}: Props) {
             readline.cursorTo(process.stdout, 0, 0);
             readline.clearScreenDown(process.stdout);
         }
-        console.log(table(list, tableConfig));
+        // render
+        const table = new Table({ head: header, ...tableConfig });
+        table.push(...list);
+        console.log(table.toString());
+        // console.log(table(list, tableConfig));
     };
 
     renderTable();

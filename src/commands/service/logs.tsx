@@ -14,7 +14,7 @@ resource.labels.location = "${config.REGION}"
 severity>=DEFAULT
 `;
 const logLinkSuffix =
-`;storageScope=project;summaryFields=${encodeURIComponent("resource/labels/revision_name")},${encodeURIComponent("labels/deploy_stamp")},${encodeURIComponent("jsonPayload/sourceLocation/file")}:false:32:beginning;lfeCustomFields="${encodeURIComponent("labels/deploy_stamp")};cursorTimestamp=${new Date().toISOString()};duration=${period}?project=${config.PROJECT_ID}&pli=1&invt=Abea-Q`;
+`;storageScope=project;summaryFields=${encodeURIComponent("resource/labels/revision_name")},${encodeURIComponent("labels/deploy_stamp")},${encodeURIComponent("jsonPayload/sourceLocation/file")}:false:32:beginning;lfeCustomFields="${encodeURIComponent("labels/deploy_stamp")};cursorTimestamp=${new Date().toISOString()};duration=${period}?project=${config.DEVELOPMENT_PROJECT_ID}&pli=1&invt=Abea-Q`;
 const logLinkJoinOperator = `OR `;
 
 async function getServiceLogsLink(includeAll: boolean = false): Promise<string> {
