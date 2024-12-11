@@ -27,7 +27,6 @@ async function fetchAllServices(projectId: string) {
 
 export async function enumerateServices(includeAll: boolean = false) {
     const services = await fetchAllServices(config.PROJECT_ID);
-    const prodServices = await fetchAllServices(config.ENVIRONMENT.PRD);
 
     let serviceArray: Service[] = [];
     for (const service of services) {
@@ -67,13 +66,15 @@ export async function enumerateServices(includeAll: boolean = false) {
         });
     }
 
-    for (const prodService of prodServices) {
-        const serviceName = prodService.metadata?.name ?? '';
-        const serviceCategory = common.getServiceCategory(serviceName);
-        if (!serviceArray.find((s) => s.serviceName === serviceName)) {
+    // verify status agains comparable environment (prod or staging)
+    const comparableServices = await fetchAllServices(config.PROJECT_ID_COMPARABLE);
+    for (const comparableService of comparableServices) {
+        const comparableServiceName = comparableService.metadata?.name ?? '';
+        const comparableServiceCategory = common.getServiceCategory(comparableServiceName);
+        if (!serviceArray.find((s) => s.serviceName === comparableServiceName)) {
             serviceArray.push({
-                serviceName,
-                serviceCategory,
+                serviceName: comparableServiceName,
+                serviceCategory: comparableServiceCategory,
                 status: false,
                 present: false,
                 url: "",

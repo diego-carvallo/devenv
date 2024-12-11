@@ -1,11 +1,7 @@
 {
-    "PROJECT_ID": "development-brainfinance",
-    "ENVIRONMENT": {
-        "DEV" : "development-brainfinance",
-        "STG" : "staging-brainfinance",
-        "PRD" : "production-brainfinance",
-    },
     "REGION": "northamerica-northeast1",
+    "PROJECT_ID": "development-brainfinance",
+    "PROJECT_ID_COMPARABLE": "production-brainfinance",
 
     "DATE_FORMAT": {
         "year": "numeric",
@@ -29,7 +25,6 @@
     "WHITELISTED_SERVICES": [
         "alicia",
         "maria",
-        "furious-application-api",
     ],
 
 
@@ -59,6 +54,7 @@
         ],
 
         "INTERCONNECTION": [
+            "ai-bridge",
             "aws-connect-bridge",
             "clamav-malware-scanner",
             "cloud-sql-proxy",
@@ -78,7 +74,6 @@
         ],
 
         "LOAN_AUTOMATION": [
-            "ai-bridge",
             "bank-account-parser",
             "bankruptcy-detection",
             "client-association-graphql",

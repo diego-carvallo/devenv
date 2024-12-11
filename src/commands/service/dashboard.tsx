@@ -1,5 +1,5 @@
 import * as gcloudpipeline from '../../lib/gcp-cloudpipeline.js';
-import * as cloudrun from '../../lib/gcp-cloudrun-googleapis.js';
+import * as cloudrun from '../../lib/gcp-cloudrun.js';
 import * as tui from '../../dashboard/tui.js';
 import * as handlers from '../../dashboard/handlers.js';
 import * as fs from 'fs';

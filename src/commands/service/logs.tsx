@@ -5,7 +5,7 @@ import * as common from '../../lib/common.js';
 import zod from 'zod';
 import open from 'open';
 
-import * as cloudrun from '../../lib/gcp-cloudrun-googleapis.js';
+import * as cloudrun from '../../lib/gcp-cloudrun.js';
 
 const period = "PT3H";
 const logLinkPrefix =

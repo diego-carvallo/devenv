@@ -4,21 +4,23 @@ import { Newline, Text } from 'ink';
 import readline from 'readline';
 import chalk from 'chalk';
 import zod from 'zod';
+import terminalLink from 'terminal-link';
 import { config } from '../../lib/config.js';
-import * as cloudrun from '../../lib/gcp-cloudrun-googleapis.js';
+import * as cloudrun from '../../lib/gcp-cloudrun.js';
 import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
 const tableConfig: TableUserConfig = {
-    columns: [
-        { alignment: 'center', width: 11, wrapWord: true },
-    ],
+    columns: {
+        0: { alignment: 'center', width: 11, wrapWord: true },
+        3: { alignment: 'center', width: 19, wrapWord: true },
+    },
     spanningCells: [ ],
 };
 
 async function getServiceList(includeAll: boolean = false): Promise<string[][]> {
     const services = await cloudrun.enumerateServices(includeAll);
     const triggers = await cloudbuild.enumerateTriggers(includeAll);
-    const header = ['CATEGORY', 'NAME', 'PUSH-TO-TAG TRIGGER', 'PUSH-TO-BRANCH TRIGGER', //'URL',
+    const header = ['CATEGORY', 'NAME','TRIGGER PATTERN', 'URL',
          'BRANCH_NAME', 'COMMIT', 'LAST_DEPLOYED', 'LAST_REVISION', 'BACKUP_REVISION'].map(text => chalk.cyan(text));
     const data = [ header ];
 
@@ -40,14 +42,16 @@ async function getServiceList(includeAll: boolean = false): Promise<string[][]> 
             categorySize = 1;
         }
 
-        const pushToTagTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.Tag)?.pattern || '---' ;
-        const pushToTagBranchTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.Branch)?.pattern || '---' ;
-
+        // const pushToTagTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.PushToTag)?.pattern || '---' ;
+        const pushToTagBranchTrigger = triggers.find((t) => t.serviceName === s.serviceName && t.pushType === cloudbuild.PushType.PushToBranch)?.pattern || '---' ;
+        console.log(`[${s.url}]` + "\u001B]8;;https://google.com\u0007Google\u001B]8;;\u0007", terminalLink("url", s.url));
         data.push([
             chalk.cyan(s.serviceCategory),
-            s.present ? s.serviceName :  chalk.red(s.serviceName),
-            pushToTagTrigger !== config.PUSH_TO_TAG_PATTERN ? chalk.red(pushToTagTrigger) : chalk.green(pushToTagTrigger),
+            s.present ? s.serviceName :  chalk.yellow(s.serviceName),
+            // pushToTagTrigger !== config.PUSH_TO_TAG_PATTERN ? chalk.red(pushToTagTrigger) : chalk.green(pushToTagTrigger),
             pushToTagBranchTrigger !== config.PUSH_TO_BRANCH_PATTERN ? chalk.red(pushToTagBranchTrigger) : chalk.green(pushToTagBranchTrigger),
+            // terminalLink('url', s.url),
+            `\u001B]8;;https://google.com\u0007Google\u001B]8;;\u0007`,
             // s.url,
             s.branchName,
             s.commitSha,

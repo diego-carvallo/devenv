@@ -1,5 +1,10 @@
+// NOTE: This file and methods are currently not used as the @google-cloud/run lib does not
+//       provide all the info needed.
+//       The implementation at gcp-cloudrun-googleapis is using the older lib googleapis
+//       that provides extra info and works better for now.
+
 import { ServicesClient } from '@google-cloud/run';
-import { config } from './config.js';
+import { config } from '../config.js';
 
 export type Service = {
     serviceName: string;

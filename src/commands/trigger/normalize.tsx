@@ -2,13 +2,15 @@ import React from 'react';
 import { table } from 'table';
 import {Newline, Text} from 'ink';
 import chalk from 'chalk';
-import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
+import { normalizeDevenvCI } from '../../lib/disposable/nomalize-naming.js';
+// import { normalizePushToTag} from '../../lib/disposable/nomalize-pushtotag.js';
 
 
 async function getUpdatedTriggerList(): Promise<string[][]> {
     const whitelistedOnly = true;
-    // const triggers = await cloudbuild.triggerMigration001(whitelistedOnly, newPushType);
-    const triggers = await cloudbuild.triggerMigration002(whitelistedOnly);
+    // const triggers = await normalizePushToTag(whitelistedOnly);
+    const triggers = await normalizeDevenvCI(whitelistedOnly);
+
     const header = ['REPO', 'TRIGGER NAME', 'LABELS', 'PUSH TYPE', 'PATTERN'].map(text => chalk.cyan(text));
     const data = [ header ];
     triggers.forEach(t => {

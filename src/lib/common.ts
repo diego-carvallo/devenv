@@ -1,6 +1,6 @@
 import { config } from './config.js';
 
-export function getServiceName(repoName: string|undefined) {
+export function getRepoAlias(repoName: string|undefined) {
     if (repoName && repoName in config.ALIASES) {
         return config.ALIASES[repoName];
     }

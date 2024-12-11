@@ -1,0 +1,24 @@
+steps:
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - '-c'
+      - |
+        set -e
+        echo PROJECT_ID=$PROJECT_ID
+        echo COMMIT_SHA=$COMMIT_SHA
+        git --no-pager show -s --format=%s $COMMIT_SHA >> COMMIT_MESSAGE
+        cat COMMIT_MESSAGE
+        if cat COMMIT_MESSAGE | grep -q "\[devenv ci\]"; then
+          echo "Command '[devenv ci]' found, triggering: ${_SERVICE_NAME}-build-and-deploy"
+          echo
+          gcloud beta builds triggers run "${_SERVICE_NAME}-devenv-ci" \
+                                          --branch=$REF_NAME \
+                                          --project=$PROJECT_ID
+        else
+          echo "Skipping build as '[devenv ci]' was not found in the commit message."
+          exit 0
+        fi
+    entrypoint: bash
+timeout: 300s
+options:
+  machineType: E2_MEDIUM

@@ -17,6 +17,7 @@ interface Message {
     timestamp: string;
 }
 
+// TODO: implementation unfinished
 export function pollServiceAlerts(settings: Settings): Promise<Alert[]> {
     let _randomAlerts = [];
 
@@ -30,6 +31,7 @@ export function pollServiceAlerts(settings: Settings): Promise<Alert[]> {
     return Promise.resolve(_randomAlerts);
 };
 
+// TODO: implementation unfinished
 export function pollLastMessagesOfService(settings: Settings): Promise<Message[]> {
     let _randomMessages = [];
     if (settings.error) {
@@ -42,18 +44,20 @@ export function pollLastMessagesOfService(settings: Settings): Promise<Message[]
     return Promise.resolve(_randomMessages);
 };
 
+// TODO: implementation unfinished
 export function pollServiceThroughput(_: Settings): Promise<number> {
     let _randomThroughput = Math.floor(Math.random() * 34);
     return Promise.resolve(_randomThroughput);
 };
 
+// TODO: implementation unfinished
 export function pollTotalThroughput(_: Settings): Promise<number> {
     let _randomThroughput = Math.floor(Math.random() * 34);
     return Promise.resolve(_randomThroughput);
 };
 
 
-
+// TODO: delete this temporary method
 function generateRandomMessage(): string {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let length = 40;
