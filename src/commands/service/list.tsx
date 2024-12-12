@@ -13,19 +13,26 @@ const tableConfig = {
     colWidths: [17, 30, ],
     wordWrap: true,
 };
-const header = ['CATEGORY',
-                `${chalk.bold(chalk.cyan('NAME'))}\n${chalk.italic(chalk.yellow('--> dev only'))}\n${chalk.italic(chalk.red('--> prd only'))}`,
-                'TRIGGER PATTERN', 'BRANCH NAME', 'COMMIT',
-                'LAST DEPLOYED', 'LAST REVISION', 'BACKUP REVISION', "LOGS"].map(text => text.includes('only')? text: chalk.bold(chalk.cyan(text)));
 
+function linkEncode(text: string, url: string): string {
+    const link = `\u001b]8;;${url}\u0007${text}\u001b]8;;\u0007`;
+    return link;
+}
 
-async function getServiceList(includeAll: boolean = false): Promise<any[][]> {
+async function getServiceList(includeAll: boolean = false): Promise<[any[][], string[]]> {
     const services = await cloudrun.enumerateServices(includeAll);
     const triggers = await cloudbuild.enumerateTriggers(includeAll);
     const data: any[][] = [];
 
     services?.forEach((s, _) => {
         let row: any[] = [];
+        const trigger = triggers.find((t) => t.serviceName === s.serviceName);
+        const triggerPattern = trigger?.pattern || '---';
+        let triggerUrl = utils.getTriggerUrl(s.serviceName)
+        let buildsUrl = trigger?.name ? utils.getBuildsUrl(trigger?.name): '';
+        let deploymentsUrl = utils.getRevisionsUrl(s.serviceName);
+        let liveUrl = s.url;
+        let logsUrl = utils.getServiceLogsUrl(s.serviceName);
 
         // category
         if(s.rowSpan) {
@@ -33,30 +40,60 @@ async function getServiceList(includeAll: boolean = false): Promise<any[][]> {
         }
         // name
         let name = s.present === "both" ? s.serviceName : s.present === "devOnly" ? chalk.yellow(s.serviceName)  : chalk.red(s.serviceName);
-        row.push({ content: name, href: s.url});
-        // trigger
-        const trigger = triggers.find((t) => t.serviceName === s.serviceName);
-        const triggerPattern = trigger?.pattern || '---';
-        let triggerText = triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(triggerPattern) : triggerPattern;
-        row.push({ content: triggerText, href: utils.getTriggerUrl(s.serviceName) });
-        // branch
-        row.push(s.branchName);
-        // commit
-        row.push(s.commitSha);
-        // last deployed
-        row.push({ content: s.lastDeployed, href: trigger?.name ? utils.getBuildsUrl(trigger?.name): '' });
-        // last revision
-        let lastRevision = s.status ? chalk.green(`${s.lastRevision}  ✔`) : chalk.red(`${s.lastRevision}  X`);
-        row.push({ content: lastRevision, href: utils.getRevisionsUrl(s.serviceName) });
-        // backup revision
-        row.push(chalk.green(s.activeRevisions?.join(', ') ?? ''));
-        // logs
-        row.push({ content: 'logs', href: utils.getServiceLogsUrl(s.serviceName) });
+        row.push(name);
+
+        // ci/cd
+        let _triggerLink = (text: string="trigger") => { return (s.present === "prodOnly") ? chalk.gray(text) : linkEncode(triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(text) : text, triggerUrl) };
+        let _buildLink  = (text: string = 'build')  => { return (s.present === "prodOnly") ? chalk.gray(text) : linkEncode(s.status ? text : chalk.red(text), buildsUrl); }
+        let _deployLink = (text: string = 'deploy') => { return (s.present === "prodOnly") ? chalk.gray(text) : linkEncode(s.status ? text : chalk.red(text), deploymentsUrl); }
+        let _liveLink   = (text: string = 'live')   => { return (s.present === "prodOnly") ? chalk.gray(text) : liveUrl ? linkEncode(text, liveUrl) : `${chalk.red(`${text}`)}`; }
+        let _logsLink   = (text: string = 'logs')   => { return (s.present === "prodOnly") ? chalk.gray(text) : linkEncode(liveUrl ? text : chalk.red(text), logsUrl); }
+        let ciBoxing = function (trigger: string, build: string, deploy: string, live: string, logs: string, simple: boolean): string {
+            if (s.present === "prodOnly") {
+                return '';
+            }
+            if (simple) {
+                return trigger + chalk.gray(`──`) + build + chalk.gray(`──`) + deploy + chalk.gray(`──`) + live + chalk.gray(`──`) + logs;
+            } else {
+                let top = chalk.gray(`╭───────╮  ╭─────╮  ╭──────╮  ╭────╮  ╭────╮`);
+                let mid = chalk.gray(`│`) + trigger + chalk.gray(`┝━━┥`) + build + chalk.gray(`┝━━┥`) + deploy + chalk.gray(`┝━━┥`) + live + chalk.gray(`┝━━┥`) + logs + chalk.gray(`│`);
+                let bot = chalk.gray(`╰───────╯  ╰─────╯  ╰──────╯  ╰────╯  ╰────╯`);
+                return `${top}\n${mid}\n${bot}`;
+            }
+        }
+        row.push(ciBoxing(_triggerLink(), _buildLink(), _deployLink(), _liveLink(), _logsLink(), true));
+
+
+        if(includeAll) {
+            // commit
+            row.push(s.present === "prodOnly" ? '' : `${s.commitSha} - ${s.branchName}`);
+            // trigger
+            row.push(s.present === "prodOnly" ? '' : triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(triggerPattern) : triggerPattern);
+            // last build
+            row.push(s.present === "prodOnly" ? '' : s.lastDeployed);
+        }
+        // deployment
+        let deployment = s.status ? chalk.green(`${s.lastRevision}  ✔`) : `${chalk.red(`${s.lastRevision}  ✖`)}`;
+        deployment += `${chalk.dim(s.activeRevisions?.map(r => `\n${r[0]}  ${r[1]}`).join('') ?? '')}`;
+        row.push(deployment);
 
         data.push(row);
     });
 
-    return data;
+    // header
+    let header = [
+        chalk.bold(chalk.cyan('CATEGORY')),
+        `${chalk.bold(chalk.cyan('NAME'))}\n${chalk.italic(chalk.yellow('--> dev only'))}\n${chalk.italic(chalk.red('--> prd only'))}`,
+        `${chalk.bold(chalk.cyan('CI/CD'))}\n\n${chalk.italic(chalk.white('links to GoogleCloud'))}`
+    ]
+    if(includeAll) {
+        header.push(chalk.bold(chalk.cyan('COMMIT')));
+        header.push(chalk.bold(chalk.cyan('TRIGGER')));
+        header.push(chalk.bold(chalk.cyan('LAST BUILD')));
+    }
+    header.push(chalk.bold(chalk.cyan('LAST DEPLOYMENT')));
+
+    return [data, header];
 }
 
 
@@ -71,7 +108,7 @@ type Props = { options: zod.infer<typeof options>; };
 // CLI default function
 export default function devenv_service_list({options}: Props) {
     const renderTable = async () => {
-        const list = await getServiceList(options.all);
+        const [list, header] = await getServiceList(options.all);
         if (options.w) {
             readline.cursorTo(process.stdout, 0, 0);
             readline.clearScreenDown(process.stdout);

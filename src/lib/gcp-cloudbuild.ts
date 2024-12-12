@@ -11,7 +11,7 @@ export enum PushType {
     Other = 'other'
 }
 
-export type Trigger = {
+export type ParsedTrigger = {
     serviceName: string;
     serviceCategory: string;
     repoType: string;
@@ -25,7 +25,7 @@ export type Trigger = {
     pattern: string;
 }
 
-export type TriggerUpdated = Trigger & {
+export type ParsedTriggerUpdated = ParsedTrigger & {
     beforePushType: string;
     beforePattern: string;
     afterPushType: string;
@@ -34,10 +34,10 @@ export type TriggerUpdated = Trigger & {
 
 
 
-export async function enumerateTriggers(includeAll: boolean = false): Promise<Trigger[]> {
+export async function enumerateTriggers(includeAll: boolean = false): Promise<ParsedTrigger[]> {
     const [triggers] = await gcloudbuild.listBuildTriggers({ projectId: config.DEVELOPMENT_PROJECT_ID });
 
-    let triggerArray: Trigger[] = [];
+    let triggerArray: ParsedTrigger[] = [];
 
     triggers.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
     for (const trigger of triggers) {
@@ -90,52 +90,3 @@ export async function enumerateTriggers(includeAll: boolean = false): Promise<Tr
     return triggerArray;
 }
 
-export async function cloneTrigger(t: Trigger, whitelistedOnly: boolean, newType: PushType): Promise<TriggerUpdated|undefined> {
-    if (whitelistedOnly && !config.WHITELISTED_SERVICES.find((n: string) => n === t.serviceName)) {
-        return;
-    }
-    if (!t.id) {
-        return;
-    }
-    const [trigger] = await gcloudbuild.getBuildTrigger({ projectId: config.DEVELOPMENT_PROJECT_ID, triggerId: t.id });
-    if (!trigger) {
-        return;
-    }
-
-    // Create a new trigger with the same configuration
-    const newTrigger = {
-        ...trigger,
-        id: undefined, // Ensure the ID is not set for the new trigger
-    };
-    let afterPushType: string = "";
-    let afterPattern: string = "";
-    if (newType === PushType.PushToBranch) {
-        afterPushType = PushType.PushToBranch;
-        afterPattern = config.TRIGGER_PATTERN_PUSH_TO_BRANCH;
-        newTrigger.triggerTemplate!.branchName = afterPattern;
-        newTrigger.triggerTemplate!.tagName = undefined;
-        // newTrigger.name = `${trigger.name?.replace('-push-to-tag', '')}-push-to-branch`
-    } else if (newType === PushType.PushToTag) {
-        afterPushType = PushType.PushToTag;
-        afterPattern = config.PUSH_TO_TAG_PATTERN;
-        newTrigger.triggerTemplate!.branchName = undefined;
-        newTrigger.triggerTemplate!.tagName = afterPattern;
-        // newTrigger.name = `${trigger.name?.replace('-push-to-branch', '')}-push-to-tag`
-    } else {
-        return;
-    }
-    const [createdTrigger] = await gcloudbuild.createBuildTrigger({ projectId: config.DEVELOPMENT_PROJECT_ID, trigger: newTrigger });
-
-    if (!createdTrigger) {
-        return;
-    }
-
-    return {
-        ...t,
-        name: createdTrigger.name || '---',
-        beforePushType: t.pushType,
-        beforePattern: t.pattern,
-        afterPushType,
-        afterPattern
-    };
-}

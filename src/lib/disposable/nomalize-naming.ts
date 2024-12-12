@@ -1,14 +1,14 @@
 import { CloudBuildClient } from '@google-cloud/cloudbuild';
 import { config } from '../config.js';
 // import * as cloudrun from '../gcp-cloudrun.js';
-import {Trigger, TriggerUpdated, enumerateTriggers} from '../gcp-cloudbuild.js';
+import {ParsedTrigger, ParsedTriggerUpdated, enumerateTriggers} from '../gcp-cloudbuild.js';
 
 
 const gcloudbuild = new CloudBuildClient();
 
 
 
-export async function _updateTrigger(t: Trigger, whitelistedOnly: boolean): Promise<TriggerUpdated|undefined> {
+export async function _updateTrigger(t: ParsedTrigger, whitelistedOnly: boolean): Promise<ParsedTriggerUpdated|undefined> {
     if(whitelistedOnly && !config.WHITELISTED_SERVICES.find((n:string) => n === t.serviceName)) {
         return;
     }
@@ -54,10 +54,10 @@ export async function _updateTrigger(t: Trigger, whitelistedOnly: boolean): Prom
 }
 
 // Migration003:
-export async function normalizeDevenvCI(whitelistedOnly: boolean): Promise<TriggerUpdated[]> {
+export async function normalizeDevenvCI(whitelistedOnly: boolean): Promise<ParsedTriggerUpdated[]> {
     const triggers = await enumerateTriggers(true);
 
-    let triggersUpdated: TriggerUpdated[] = [];
+    let triggersUpdated: ParsedTriggerUpdated[] = [];
 
     for (const t of triggers) {
         if(whitelistedOnly && !config.WHITELISTED_SERVICES.find((n:string) => n === t.serviceName)) {

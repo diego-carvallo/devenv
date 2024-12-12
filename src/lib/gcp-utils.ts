@@ -73,7 +73,6 @@ export function getServiceLogsUrl(serviceName: string): string {
     const baseUrl = `https://console.cloud.google.com/logs/query`;
     const summaryFields = `;summaryFields=resource%252Flabels%252Frevision_name,labels%252Fdeploy_stamp:false:32:beginning`.replaceAll(',', '%2C');
     const filter = `;query=resource.type%20%3D%20%22cloud_run_revision%22%0Aresource.labels.service_name%20%3D%20%22${serviceName}%22%0Aresource.labels.location%20%3D%20%22northamerica-northeast1%22%0A%20severity%3E%3DDEFAULT;storageScope=project;duration=${period}${summaryFields}?project=${config.DEVELOPMENT_PROJECT_ID}`;
-    // const filter = `;query=resource.type%20%3D%20%22cloud_run_revision%22%0Aresource.labels.service_name%20%3D%20%22${serviceName}%22%0Aresource.labels.location%20%3D%20%22northamerica-northeast1%22%0A%20severity%3E%3DDEFAULT;storageScope=project;duration=${period}?&project=${config.DEVELOPMENT_PROJECT_ID}`;
     const encodedUrl = `${baseUrl}${filter}`;
     return encodedUrl;
 }

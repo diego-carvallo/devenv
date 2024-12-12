@@ -104,7 +104,7 @@ export async function enumerateServices(includeAll: boolean = false): Promise<Pa
             if (revisionId === lastRevision) {
                 continue;
             }
-            activeRevisions.push([revisionId, (`${revision.percent ?? 0}%`)]);
+            activeRevisions.push([revisionId, `${revision.percent ?? 0}%`]);
         }
 
         devServiceList.push({
