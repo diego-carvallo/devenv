@@ -1,7 +1,18 @@
 {
     "version": "0.2.0",
     "configurations": [
-      {
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug [service list]",
+            "program": "${workspaceFolder}/dist/cli.js",
+            "args": ["service", "list"],
+            "console": "integratedTerminal",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "sourceMaps": true
+          },
+          {
         "type": "node",
         "request": "launch",
         "name": "Debug [trigger list]",
@@ -15,9 +26,9 @@
       {
         "type": "node",
         "request": "launch",
-        "name": "Debug [service list]",
+        "name": "Debug [trigger normalize]",
         "program": "${workspaceFolder}/dist/cli.js",
-        "args": ["service", "list"],
+        "args": ["trigger", "normalize"],
         "console": "integratedTerminal",
         "preLaunchTask": "tsc: build - tsconfig.json",
         "outFiles": ["${workspaceFolder}/dist/**/*.js"],

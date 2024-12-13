@@ -1,24 +1,27 @@
+# Build controlled by "[devenv ci]" command string in the commit message
 steps:
-  - name: gcr.io/cloud-builders/gcloud
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
     args:
       - '-c'
       - |
         set -e
-        echo DEVELOPMENT_PROJECT_ID=$DEVELOPMENT_PROJECT_ID
+        echo PROJECT_ID=$PROJECT_ID
         echo COMMIT_SHA=$COMMIT_SHA
         git --no-pager show -s --format=%s $COMMIT_SHA >> COMMIT_MESSAGE
         cat COMMIT_MESSAGE
         if cat COMMIT_MESSAGE | grep -q "\[devenv ci\]"; then
           echo "Command '[devenv ci]' found, triggering: ${_SERVICE_NAME}-build-and-deploy"
           echo
-          gcloud beta builds triggers run "${_SERVICE_NAME}-devenv-ci" \
+          gcloud beta builds triggers run "${_SERVICE_NAME}-build-and-deploy" \
                                           --branch=$REF_NAME \
-                                          --project=$DEVELOPMENT_PROJECT_ID
+                                          --project=$PROJECT_ID
         else
           echo "Skipping build as '[devenv ci]' was not found in the commit message."
           exit 0
         fi
-    entrypoint: bash
-timeout: 300s
 options:
-  machineType: E2_MEDIUM
+  machineType: 'E2_MEDIUM'
+timeout: 300s
+
+

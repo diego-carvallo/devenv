@@ -2,12 +2,12 @@ import { CloudBuildClient } from '@google-cloud/cloudbuild';
 import { config } from '../config.js';
 
 import * as cloudrun from '../gcp-cloudrun.js';
-import {ParsedTrigger, ParsedTriggerUpdated, PushType, enumerateTriggers} from '../gcp-cloudbuild.js';
+import {ParsedTrigger, ParsedTriggerNormalized, PushType, enumerateTriggers} from '../gcp-cloudbuild.js';
 
 
 const gcloudbuild = new CloudBuildClient();
 
-async function _updateTrigger(t: ParsedTrigger, whitelistedOnly: boolean, newType: PushType): Promise<ParsedTriggerUpdated|undefined> {
+async function _updateTrigger(t: ParsedTrigger, whitelistedOnly: boolean, newType: PushType): Promise<ParsedTriggerNormalized|undefined> {
     if(whitelistedOnly && !config.WHITELISTED_SERVICES.find((n:string) => n === t.serviceName)) {
         return;
     }
@@ -52,7 +52,7 @@ async function _updateTrigger(t: ParsedTrigger, whitelistedOnly: boolean, newTyp
     };
 }
 
-async function _cloneTrigger(t: ParsedTrigger, whitelistedOnly: boolean, newType: PushType): Promise<ParsedTriggerUpdated|undefined> {
+async function _cloneTrigger(t: ParsedTrigger, whitelistedOnly: boolean, newType: PushType): Promise<ParsedTriggerNormalized|undefined> {
     if (whitelistedOnly && !config.WHITELISTED_SERVICES.find((n: string) => n === t.serviceName)) {
         return;
     }
@@ -107,10 +107,10 @@ async function _cloneTrigger(t: ParsedTrigger, whitelistedOnly: boolean, newType
  *     - push-to-branch for pushes to develop branch to keep the devenv updated
  *     - pusht-to-tag: when devs want to deploy a change the would create and push a git tag
  */
-export async function normalizePushToTag(whitelistedOnly: boolean): Promise<ParsedTriggerUpdated[]> {
+export async function normalizePushToTag(whitelistedOnly: boolean): Promise<ParsedTriggerNormalized[]> {
     const services = await cloudrun.enumerateServices(true);
     const triggers = await enumerateTriggers(true);
-    let triggersUpdated: ParsedTriggerUpdated[] = [];
+    let triggersUpdated: ParsedTriggerNormalized[] = [];
 
     for (const s of services) {
         if(whitelistedOnly && !config.WHITELISTED_SERVICES.find((n:string) => n === s.serviceName)) {

@@ -25,7 +25,7 @@ export type ParsedTrigger = {
     pattern: string;
 }
 
-export type ParsedTriggerUpdated = ParsedTrigger & {
+export type ParsedTriggerNormalized = ParsedTrigger & {
     beforePushType: string;
     beforePattern: string;
     afterPushType: string;

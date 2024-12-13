@@ -21,8 +21,11 @@
 
      // Add service names here. If empty, all services will be listed.
     "WHITELISTED_SERVICES": [
-        "alicia",
+        // "alicia",
         "maria",
+        "furious-application-api",
+        "clamav-malware-scanner",
+        "document-template-service",
     ],
 
 

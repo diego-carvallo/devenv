@@ -4,6 +4,7 @@ import { Newline, Text } from 'ink';
 import readline from 'readline';
 import chalk from 'chalk';
 import zod from 'zod';
+import { config } from '../../lib/config.js';
 // import * as cloudrun from '../../lib/gcp-cloudrun.js';
 import * as cloudbuild from '../../lib/gcp-cloudbuild.js';
 
@@ -18,7 +19,7 @@ const tableConfig: TableUserConfig = {
 async function getTriggerList(includeAll: boolean = false): Promise<string[][]> {
     const triggers = await cloudbuild.enumerateTriggers(includeAll);
     // const services = await cloudrun.enumerateServices(includeAll);
-    const header = ['SERVICE CATEGORY', '_SERVICE_NAME', 'REPO HOST', 'TRIGGER NAME', 'PUSH TO', 'PATTERN', 'LABELS', 'ENABLED'].map(text => chalk.cyan(text));
+    const header = ['SERVICE CATEGORY', '_SERVICE_NAME', 'REPO HOST', 'TRIGGER NAME', 'PUSH TO', 'PATTERN', 'ENABLED'].map(text => chalk.cyan(text));
     const data = [ header ];
 
     let currentCategory = '';
@@ -42,13 +43,10 @@ async function getTriggerList(includeAll: boolean = false): Promise<string[][]> 
             chalk.cyan(t.serviceCategory),
             t.serviceName,
             t.repoType + (t.repoHost?` ${t.repoHost}`:``),
-            t.name.replace("DEPRECATED", chalk.yellow("DEPRECATED"))
-                  .replace("push", chalk.yellow("push"))
-                  .replace("build-and-deploy", chalk.green("build-and-deploy"))
-                  .replace(t.serviceName, chalk.cyan(t.serviceName)),
+            chalk.red(t.name.replace(t.serviceName, chalk.cyan(t.serviceName)).replace("-devenv-ci", chalk.green("-devenv-ci"))),
             t.pushType,
-            t.pattern,
-            t.labels,
+            chalk.red(t.pattern.replace(config.TRIGGER_PATTERN_PUSH_TO_BRANCH, chalk.green(config.TRIGGER_PATTERN_PUSH_TO_BRANCH))),
+            // t.labels,
             t.disabled ? chalk.red('Disabled') : chalk.green('   ✔'),
         ]);
     });

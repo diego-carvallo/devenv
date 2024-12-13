@@ -14,8 +14,8 @@ const tableConfig = {
     wordWrap: true,
 };
 
-function linkEncode(text: string, url: string): string {
-    const link = `\u001b]8;;${url}\u0007${text}\u001b]8;;\u0007`;
+function urlEncode(text: string, url: string): string {
+    const link = url ? `\u001b]8;;${url}\u0007${text}\u001b]8;;\u0007` : chalk.gray(text);
     return link;
 }
 
@@ -43,16 +43,16 @@ async function getServiceList(includeAll: boolean = false): Promise<[any[][], st
         row.push(name);
 
         // ci/cd
-        let _triggerLink = (text: string="trigger") => { return (s.present === "prodOnly") ? chalk.gray(text) : linkEncode(triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(text) : text, triggerUrl) };
-        let _buildLink  = (text: string = 'build')  => { return (s.present === "prodOnly") ? chalk.gray(text) : linkEncode(s.status ? text : chalk.red(text), buildsUrl); }
-        let _deployLink = (text: string = 'deploy') => { return (s.present === "prodOnly") ? chalk.gray(text) : linkEncode(s.status ? text : chalk.red(text), deploymentsUrl); }
-        let _liveLink   = (text: string = 'live')   => { return (s.present === "prodOnly") ? chalk.gray(text) : liveUrl ? linkEncode(text, liveUrl) : `${chalk.red(`${text}`)}`; }
-        let _logsLink   = (text: string = 'logs')   => { return (s.present === "prodOnly") ? chalk.gray(text) : linkEncode(liveUrl ? text : chalk.red(text), logsUrl); }
-        let ciBoxing = function (trigger: string, build: string, deploy: string, live: string, logs: string, simple: boolean): string {
+        let _triggerLink = (text: string="trigger") => urlEncode(triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(text) : text, triggerUrl);
+        let _buildLink  = (text: string = 'build')  => urlEncode(s.status ? text : chalk.red(text), buildsUrl);
+        let _deployLink = (text: string = 'deploy') => urlEncode(s.status ? text : chalk.red(text), deploymentsUrl);
+        let _liveLink   = (text: string = 'live')   => liveUrl ? urlEncode(text, liveUrl) : `${chalk.red(`${text}`)}`;
+        let _logsLink   = (text: string = 'logs')   => urlEncode(liveUrl ? text : chalk.red(text), logsUrl);
+        let ciBoxing = function (trigger: string, build: string, deploy: string, live: string, logs: string, largeView: boolean): string {
             if (s.present === "prodOnly") {
                 return '';
             }
-            if (simple) {
+            if (largeView) {
                 return trigger + chalk.gray(`──`) + build + chalk.gray(`──`) + deploy + chalk.gray(`──`) + live + chalk.gray(`──`) + logs;
             } else {
                 let top = chalk.gray(`╭───────╮  ╭─────╮  ╭──────╮  ╭────╮  ╭────╮`);
@@ -61,7 +61,7 @@ async function getServiceList(includeAll: boolean = false): Promise<[any[][], st
                 return `${top}\n${mid}\n${bot}`;
             }
         }
-        row.push(ciBoxing(_triggerLink(), _buildLink(), _deployLink(), _liveLink(), _logsLink(), true));
+        row.push(ciBoxing(_triggerLink(), _buildLink(), _deployLink(), _liveLink(), _logsLink(), includeAll));
 
 
         if(includeAll) {
