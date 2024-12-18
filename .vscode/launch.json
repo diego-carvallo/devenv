@@ -11,8 +11,19 @@
             "preLaunchTask": "tsc: build - tsconfig.json",
             "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             "sourceMaps": true
-          },
-          {
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug [service export]",
+            "program": "${workspaceFolder}/dist/cli.js",
+            "args": ["service", "export"],
+            "console": "integratedTerminal",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "sourceMaps": true
+        },
+        {
         "type": "node",
         "request": "launch",
         "name": "Debug [trigger list]",

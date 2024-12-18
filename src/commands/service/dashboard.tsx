@@ -49,7 +49,7 @@ async function poll(): Promise<void> {
 async function renderDashboard() {
     try {
         tui.create({ onServiceChange });
-        const services = await cloudrun.enumerateServices(false);
+        const services = await cloudrun.enumerateServices('againsProd', false);
         loadServices(services);
         handlers.updateServicesList(services);
         await poll();

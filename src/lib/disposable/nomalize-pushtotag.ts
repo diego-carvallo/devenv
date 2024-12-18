@@ -108,7 +108,7 @@ async function _cloneTrigger(t: ParsedTrigger, whitelistedOnly: boolean, newType
  *     - pusht-to-tag: when devs want to deploy a change the would create and push a git tag
  */
 export async function normalizePushToTag(whitelistedOnly: boolean): Promise<ParsedTriggerNormalized[]> {
-    const services = await cloudrun.enumerateServices(true);
+    const services = await cloudrun.enumerateServices('againsProd', true);
     const triggers = await enumerateTriggers(true);
     let triggersUpdated: ParsedTriggerNormalized[] = [];
 

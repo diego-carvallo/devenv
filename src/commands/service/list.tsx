@@ -20,7 +20,7 @@ function urlEncode(text: string, url: string): string {
 }
 
 async function getServiceList(includeAll: boolean = false): Promise<[any[][], string[]]> {
-    const services = await cloudrun.enumerateServices(includeAll);
+    const services = await cloudrun.enumerateServices('againsProd', includeAll);
     const triggers = await cloudbuild.enumerateTriggers(includeAll);
     const data: any[][] = [];
 
@@ -49,7 +49,7 @@ async function getServiceList(includeAll: boolean = false): Promise<[any[][], st
         let _liveLink   = (text: string = 'live')   => liveUrl ? urlEncode(text, liveUrl) : `${chalk.red(`${text}`)}`;
         let _logsLink   = (text: string = 'logs')   => urlEncode(liveUrl ? text : chalk.red(text), logsUrl);
         let ciBoxing = function (trigger: string, build: string, deploy: string, live: string, logs: string, largeView: boolean): string {
-            if (s.present === "prodOnly") {
+            if (s.present === "devMissing") {
                 return '';
             }
             if (largeView) {
@@ -66,11 +66,11 @@ async function getServiceList(includeAll: boolean = false): Promise<[any[][], st
 
         if(includeAll) {
             // commit
-            row.push(s.present === "prodOnly" ? '' : `${s.commitSha} - ${s.branchName}`);
+            row.push(s.present === "devMissing" ? '' : `${s.commitSha} - ${s.branchName}`);
             // trigger
-            row.push(s.present === "prodOnly" ? '' : triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(triggerPattern) : triggerPattern);
+            row.push(s.present === "devMissing" ? '' : triggerPattern !== config.TRIGGER_PATTERN_PUSH_TO_BRANCH ? chalk.red(triggerPattern) : triggerPattern);
             // last build
-            row.push(s.present === "prodOnly" ? '' : s.lastDeployed);
+            row.push(s.present === "devMissing" ? '' : s.lastDeployed);
         }
         // deployment
         let deployment = s.status ? chalk.green(`${s.lastRevision}  ✔`) : `${chalk.red(`${s.lastRevision}  ✖`)}`;

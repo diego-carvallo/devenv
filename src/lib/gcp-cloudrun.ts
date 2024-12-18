@@ -8,7 +8,7 @@ export type ParsedService = {
     serviceCategory: string;
     url: string;
     status: boolean;
-    present: "both" | "devOnly" | "prodOnly";
+    present: "both" | "devOnly" | "devMissing";
     branchName: string;
     commitSha: string;
     lastDeployed: string;
@@ -18,7 +18,7 @@ export type ParsedService = {
 }
 
 
-let PROD_SERVICE_LIST: GoogleService[] = [];
+let COMPARABLE_SERVICE_LIST: GoogleService[] = [];
 
 
 async function _fetchAllServicesFor(projectId: string): Promise<GoogleService[]> {
@@ -72,16 +72,16 @@ function _sort(serviceArray: ParsedService[]) {
     });
 }
 
-async function _prodServiceList(): Promise<GoogleService[]> {
-    if (PROD_SERVICE_LIST.length == 0) {
-        PROD_SERVICE_LIST = await _fetchAllServicesFor(config.PRODUCTION_PROJECT_ID)
+async function _comparableServiceList(compareAgainst: 'againsProd' | 'againstStaging'): Promise<GoogleService[]> {
+    if (COMPARABLE_SERVICE_LIST.length == 0) {
+        COMPARABLE_SERVICE_LIST = await _fetchAllServicesFor(compareAgainst === 'againstStaging' ? config.STAGING_PROJECT_ID : config.PRODUCTION_PROJECT_ID)
     }
-    return PROD_SERVICE_LIST;
+    return COMPARABLE_SERVICE_LIST;
 }
 
-export async function enumerateServices(includeAll: boolean = false): Promise<ParsedService[]> {
+export async function enumerateServices(compareAgainst: 'againsProd' | 'againstStaging', includeAll: boolean = false): Promise<ParsedService[]> {
     const services = await _fetchAllServicesFor(config.DEVELOPMENT_PROJECT_ID);
-    const prodServiceList = await _prodServiceList();
+    const comparableServiceList = await _comparableServiceList(compareAgainst);
 
     let devServiceList: ParsedService[] = [];
     for (const service of services) {
@@ -111,7 +111,7 @@ export async function enumerateServices(includeAll: boolean = false): Promise<Pa
             serviceName,
             serviceCategory,
             status,
-            present: prodServiceList.find((s) => s.metadata?.name === serviceName) ? "both" : "devOnly",
+            present: comparableServiceList.find((s) => s.metadata?.name === serviceName) ? "both" : "devOnly",
             url: url,
             branchName: branchName ?? '',
             commitSha: commitSha ?? '',
@@ -121,9 +121,9 @@ export async function enumerateServices(includeAll: boolean = false): Promise<Pa
         });
     }
 
-    // find missing services available in prodOnly
-    for (const prodService of prodServiceList) {
-        const comparableServiceName = prodService.metadata?.name ?? '';
+    // find missing services not available in dev
+    for (const comparableService of comparableServiceList) {
+        const comparableServiceName = comparableService.metadata?.name ?? '';
         const comparableServiceCategory = utils.getServiceCategory(comparableServiceName);
         if(!includeAll && utils.excludeService(comparableServiceName)) {
             continue;
@@ -133,7 +133,7 @@ export async function enumerateServices(includeAll: boolean = false): Promise<Pa
                 serviceName: comparableServiceName,
                 serviceCategory: comparableServiceCategory,
                 status: false,
-                present: "prodOnly",
+                present: "devMissing",
                 url: "",
                 branchName: "",
                 commitSha: "",

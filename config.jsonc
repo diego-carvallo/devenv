@@ -1,6 +1,7 @@
 {
     "REGION": "northamerica-northeast1",
     "DEVELOPMENT_PROJECT_ID": "development-brainfinance",
+    "STAGING_PROJECT_ID": "staging-brainfinance",
     "PRODUCTION_PROJECT_ID": "production-brainfinance",
 
     "DATE_FORMAT": {

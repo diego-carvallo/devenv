@@ -12,10 +12,10 @@ export function getRepoAlias(repoName: string|undefined) {
 export function getServiceCategory(serviceName: string|undefined) {
     for (const category in config.SERVICES) {
         if (serviceName && config.SERVICES[category].includes(serviceName)) {
-            return `${category} SERVICES`;
+            return `${category}`;
         }
     }
-    return 'UNCATEGORIZED SERVICES';
+    return 'UNCATEGORIZED';
 }
 
 export function excludeService(serviceName: string) {

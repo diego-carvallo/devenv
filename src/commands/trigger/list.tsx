@@ -18,7 +18,7 @@ const tableConfig: TableUserConfig = {
 
 async function getTriggerList(includeAll: boolean = false): Promise<string[][]> {
     const triggers = await cloudbuild.enumerateTriggers(includeAll);
-    // const services = await cloudrun.enumerateServices(includeAll);
+    // const services = await cloudrun.enumerateServices('againsProd', includeAll);
     const header = ['SERVICE CATEGORY', '_SERVICE_NAME', 'REPO HOST', 'TRIGGER NAME', 'PUSH TO', 'PATTERN', 'ENABLED'].map(text => chalk.cyan(text));
     const data = [ header ];
 

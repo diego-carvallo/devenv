@@ -8,7 +8,7 @@ import * as cloudrun from '../../lib/gcp-cloudrun.js';
 
 
 async function getServiceLogsLink(includeAll: boolean = false): Promise<string> {
-    const services = await cloudrun.enumerateServices(includeAll);
+    const services = await cloudrun.enumerateServices('againsProd', includeAll);
     const logsUrl = utils.getServicesLogsUrl(services, includeAll);
     return logsUrl;
 }
