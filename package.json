@@ -30,6 +30,7 @@
         "jsonc-parser": "^3.3.1",
         "moment": "^2.9.0",
         "pastel": "^2.0.0",
+        "project-root-directory": "^1.0.3",
         "react": "^18.2.0",
         "table": "^6.9.0",
         "zod": "^3.21.4"

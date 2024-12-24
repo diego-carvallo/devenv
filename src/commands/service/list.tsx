@@ -117,7 +117,6 @@ export default function devenv_service_list({options}: Props) {
         const table = new Table({ head: header, ...tableConfig });
         table.push(...list);
         console.log(table.toString());
-        // console.log(table(list, tableConfig));
     };
 
     renderTable();

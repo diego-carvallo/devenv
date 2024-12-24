@@ -7,10 +7,12 @@ import { config } from '../../lib/config.js';
 import * as cloudrun from '../../lib/gcp-cloudrun.js';
 import { promisify } from 'util';
 import { exec } from 'child_process';
+import projectRootDirectory from 'project-root-directory';
+
 
 
 const execAsync = promisify(exec);
-const ROOT_PATH = process.cwd();
+const ROOT_PATH = projectRootDirectory;
 const EXPORT_PATH = `${ROOT_PATH}/yaml_exported_services`;
 
 
@@ -69,7 +71,7 @@ async function getServiceList(includeAll: boolean = false): Promise<[any[][], st
         // export
         if(s.present !== "devOnly") {
             const exportResult = await _exportStagingServiceToYaml(s.serviceName, s.serviceCategory);
-            row.push(exportResult.result === "ok" ? chalk.green(`${exportResult.file}  ✔`) : `${chalk.red(`${exportResult.result}  ✖`)}`);
+            row.push(exportResult.result === "ok" ? chalk.green(`${exportResult.file}  ✔`) : `${chalk.red(`${exportResult.result}`)}`);
         } else {
             row.push(chalk.red(`devOnly  ✖`));
         }
@@ -89,7 +91,7 @@ async function getServiceList(includeAll: boolean = false): Promise<[any[][], st
 
 
 // CLI params definition
-export const alias = 'l';
+export const alias = 'e';
 export const options = zod.object({
                                     all: zod.boolean().describe('Include LOAN_AUTOMATION and MONITORING services'),
                                  });
@@ -103,7 +105,6 @@ export default function devenv_service_export({options}: Props) {
         const table = new Table({ head: header, ...tableConfig });
         table.push(...list);
         console.log(table.toString());
-        // console.log(table(list, tableConfig));
     };
 
     renderTable();
